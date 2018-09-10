@@ -113,6 +113,20 @@ function osi_menu() {
 
   $items = array();
 
+  $items['osi/term/%'] = array(
+    'title' => 'NAT Term redirect',
+    'page callback' => 'osi_nat_term_redirect',
+    'page arguments' => array(2),
+    'access arguments' => array('take osi question'), 
+    'type' => MENU_CALLBACK, 
+  );
+  $items['osi/node/%'] = array(
+    'title' => 'NAT Node redirect',
+    'page callback' => 'osi_nat_node_redirect',
+    'page arguments' => array(2),
+    'access arguments' => array('take osi question'), 
+    'type' => MENU_CALLBACK, 
+  );
   $items['admin/settings/osi'] = array(
     'title' => 'Self-Assessment Indicator Configuration', 
     'description' => 'Configure Self-Assessment Indicators for users.', 
@@ -139,8 +153,7 @@ function osi_menu() {
     'ignored page callback' => 'osi_report_combined',
     'page callback' => 'osi_report_table',
     'page arguments' => array(1,4,5),
-//    'access arguments' => array('take osi question'),
-    'access arguments' => array('administer osi configuration'), 
+    'access arguments' => array('take osi question'),
     'type' => MENU_LOCAL_TASK,
     'weight' => 4,
   );
@@ -302,8 +315,31 @@ function osi_menu() {
 }
 
 /* 
- * utility function called from menu
+ * utility functions called from menu
  * 
+ */
+
+/* 
+ * redirect from a term to corresponding nat node
+ *
+ */
+
+function osi_nat_term_redirect($tid) {
+  $nids = nat_get_nids(array($tid)); 
+  drupal_goto('node/' . key($nids)); 
+}
+
+/* 
+ * redirect from a node to corresponding nat term
+ *
+ */
+
+function osi_nat_node_redirect($nid) {
+  $term = nat_get_term($nid);
+  drupal_goto('taxonomy/term/' . $term->tid); 
+}
+
+/* 
  * determine if current user language matches category language
  *
  */
