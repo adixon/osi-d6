@@ -1,0 +1,2396 @@
+<?php
+
+/**
+ * Implementation of hook_views_default_views().
+ */
+function osi_views_default_views() {
+  $views = array();
+
+  // Exported view: Categories
+  $view = new view;
+  $view->name = 'Categories';
+  $view->description = 'A listing of categories';
+  $view->tag = '';
+  $view->base_table = 'node';
+  $view->core = 0;
+  $view->api_version = '2';
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+  $handler = $view->new_display('default', 'Defaults', 'default');
+  $handler->override_option('fields', array(
+    'body' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+      ),
+      'exclude' => 0,
+      'id' => 'body',
+      'table' => 'node_revisions',
+      'field' => 'body',
+      'relationship' => 'none',
+    ),
+    'view_node' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+      ),
+      'text' => 'Go',
+      'exclude' => 0,
+      'id' => 'view_node',
+      'table' => 'node',
+      'field' => 'view_node',
+      'relationship' => 'none',
+    ),
+    'name' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+      ),
+      'link_to_taxonomy' => 0,
+      'exclude' => 1,
+      'id' => 'name',
+      'table' => 'term_data',
+      'field' => 'name',
+      'relationship' => 'none',
+    ),
+    'weight' => array(
+      'label' => 'Weight',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+      ),
+      'exclude' => 1,
+      'id' => 'weight',
+      'table' => 'term_data',
+      'field' => 'weight',
+      'relationship' => 'none',
+    ),
+    'description' => array(
+      'label' => 'Term description',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+      ),
+      'exclude' => 1,
+      'id' => 'description',
+      'table' => 'term_data',
+      'field' => 'description',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('sorts', array(
+    'weight' => array(
+      'order' => 'ASC',
+      'id' => 'weight',
+      'table' => 'term_data',
+      'field' => 'weight',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('arguments', array(
+    'tid' => array(
+      'default_action' => 'summary asc',
+      'style_plugin' => 'default_summary',
+      'style_options' => array(
+        'count' => 0,
+        'override' => 0,
+        'items_per_page' => '25',
+      ),
+      'wildcard' => 'all',
+      'wildcard_substitution' => 'All',
+      'title' => '',
+      'default_argument_type' => 'fixed',
+      'default_argument' => '',
+      'validate_type' => 'none',
+      'validate_fail' => 'not found',
+      'break_phrase' => 1,
+      'add_table' => 0,
+      'require_value' => 0,
+      'reduce_duplicates' => 0,
+      'set_breadcrumb' => 0,
+      'id' => 'tid',
+      'table' => 'term_node',
+      'field' => 'tid',
+      'relationship' => 'none',
+      'default_options_div_prefix' => '',
+      'default_argument_user' => 0,
+      'default_argument_fixed' => '',
+      'default_argument_php' => '',
+      'validate_argument_node_type' => array(
+        'osi' => 0,
+        'book' => 0,
+        'category' => 0,
+        'help' => 0,
+        'page' => 0,
+        'standard' => 0,
+        'story' => 0,
+      ),
+      'validate_argument_node_access' => 0,
+      'validate_argument_nid_type' => 'nid',
+      'validate_argument_vocabulary' => array(
+        3 => 3,
+        4 => 0,
+        1 => 0,
+      ),
+      'validate_argument_type' => 'tid',
+      'user_argument_type' => 'uid',
+      'restrict_user_roles' => 0,
+      'user_roles' => array(),
+      'validate_argument_php' => '',
+    ),
+  ));
+  $handler->override_option('filters', array(
+    'type' => array(
+      'operator' => 'in',
+      'value' => array(
+        'standard' => 'standard',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'type',
+      'table' => 'node',
+      'field' => 'type',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('access', array(
+    'type' => 'role',
+    'role' => array(
+      4 => 4,
+      3 => 3,
+      5 => 5,
+    ),
+  ));
+  $handler->override_option('cache', array(
+    'type' => 'none',
+  ));
+  $handler->override_option('title', 'Categories');
+  $handler->override_option('header', '<?php
+if (\'categories\' == arg(0) && arg(1)) {
+  $tids = explode(\'+\',arg(1));
+  $parents = array();
+  foreach($tids as $tid) {
+    $parents = array_merge( $parents,taxonomy_get_parents($tid));
+  }
+  if (1 ==count($parents)) {
+//    print_r($parents);
+    print \'<h1>\'.$parents[0]->name.\'</h1><p>\'.$parents[0]->description.\'</p>\';
+  }
+}
+?>');
+  $handler->override_option('header_format', '2');
+  $handler->override_option('header_empty', 1);
+  $handler->override_option('items_per_page', 0);
+  $handler->override_option('style_plugin', 'list');
+  $handler->override_option('style_options', array(
+    'grouping' => 'name',
+    'type' => 'ol',
+  ));
+  $handler = $view->new_display('page', 'Page', 'page_1');
+  $handler->override_option('title', '');
+  $handler->override_option('path', 'categories');
+  $handler->override_option('menu', array(
+    'type' => 'none',
+    'title' => '',
+    'description' => '',
+    'weight' => 0,
+    'name' => 'navigation',
+  ));
+  $handler->override_option('tab_options', array(
+    'type' => 'none',
+    'title' => '',
+    'description' => '',
+    'weight' => 0,
+    'name' => 'navigation',
+  ));
+
+  $views[$view->name] = $view;
+
+  // Exported view: Indicators
+  $view = new view;
+  $view->name = 'Indicators';
+  $view->description = 'Administrative Listing of Indicators';
+  $view->tag = '';
+  $view->base_table = 'node';
+  $view->core = 0;
+  $view->api_version = '2';
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+  $handler = $view->new_display('default', 'Defaults', 'default');
+  $handler->override_option('fields', array(
+    'name' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+      ),
+      'link_to_taxonomy' => 0,
+      'exclude' => 1,
+      'id' => 'name',
+      'table' => 'term_data',
+      'field' => 'name',
+      'override' => array(
+        'button' => 'Override',
+      ),
+      'relationship' => 'none',
+    ),
+    'field_number_value' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 0,
+        'ellipsis' => 0,
+        'html' => 0,
+      ),
+      'link_to_node' => 0,
+      'label_type' => 'none',
+      'format' => 'default',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 1,
+      'id' => 'field_number_value',
+      'table' => 'node_data_field_number',
+      'field' => 'field_number_value',
+      'override' => array(
+        'button' => 'Override',
+      ),
+      'relationship' => 'none',
+    ),
+    'title' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+      ),
+      'link_to_node' => 1,
+      'exclude' => 0,
+      'id' => 'title',
+      'table' => 'node',
+      'field' => 'title',
+      'relationship' => 'none',
+      'override' => array(
+        'button' => 'Override',
+      ),
+    ),
+    'changed' => array(
+      'label' => 'Last change',
+      'date_format' => 'small',
+      'custom_date_format' => '',
+      'exclude' => 0,
+      'id' => 'changed',
+      'table' => 'node',
+      'field' => 'changed',
+      'relationship' => 'none',
+      'override' => array(
+        'button' => 'Override',
+      ),
+    ),
+  ));
+  $handler->override_option('sorts', array(
+    'weight' => array(
+      'order' => 'ASC',
+      'id' => 'weight',
+      'table' => 'term_data',
+      'field' => 'weight',
+      'override' => array(
+        'button' => 'Override',
+      ),
+      'relationship' => 'none',
+    ),
+    'field_number_value' => array(
+      'order' => 'ASC',
+      'delta' => -1,
+      'id' => 'field_number_value',
+      'table' => 'node_data_field_number',
+      'field' => 'field_number_value',
+      'override' => array(
+        'button' => 'Override',
+      ),
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('arguments', array(
+    'tid' => array(
+      'default_action' => 'ignore',
+      'style_plugin' => 'default_summary',
+      'style_options' => array(),
+      'wildcard' => 'all',
+      'wildcard_substitution' => 'All',
+      'title' => '%1',
+      'default_argument_type' => 'php',
+      'default_argument' => '',
+      'validate_type' => 'numeric',
+      'validate_fail' => 'empty',
+      'break_phrase' => 0,
+      'add_table' => 0,
+      'require_value' => 0,
+      'reduce_duplicates' => 0,
+      'set_breadcrumb' => 1,
+      'id' => 'tid',
+      'table' => 'term_node',
+      'field' => 'tid',
+      'relationship' => 'none',
+      'default_options_div_prefix' => '',
+      'default_argument_user' => 0,
+      'default_argument_fixed' => '',
+      'default_argument_php' => 'return 1;',
+      'validate_argument_node_type' => array(
+        'osi' => 0,
+        'book' => 0,
+        'category' => 0,
+        'page' => 0,
+        'standard' => 0,
+        'story' => 0,
+      ),
+      'validate_argument_node_access' => 0,
+      'validate_argument_nid_type' => 'nid',
+      'validate_argument_vocabulary' => array(
+        1 => 1,
+        3 => 0,
+      ),
+      'validate_argument_type' => 'tid',
+      'validate_argument_php' => '',
+      'user_argument_type' => 'either',
+      'restrict_user_roles' => 0,
+      'user_roles' => array(),
+    ),
+  ));
+  $handler->override_option('filters', array(
+    'type' => array(
+      'operator' => 'in',
+      'value' => array(
+        'osi' => 'osi',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'type',
+      'table' => 'node',
+      'field' => 'type',
+      'relationship' => 'none',
+    ),
+    'language' => array(
+      'id' => 'language',
+      'table' => 'node',
+      'field' => 'language',
+    ),
+  ));
+  $handler->override_option('access', array(
+    'type' => 'perm',
+    'perm' => 'administer nodes',
+  ));
+  $handler->override_option('cache', array(
+    'type' => 'none',
+  ));
+  $handler->override_option('title', 'Indicators Administration and Public');
+  $handler->override_option('header_format', '4');
+  $handler->override_option('header_empty', 1);
+  $handler->override_option('empty', 'No indicators.');
+  $handler->override_option('empty_format', '4');
+  $handler->override_option('use_ajax', TRUE);
+  $handler->override_option('items_per_page', 0);
+  $handler->override_option('style_plugin', 'list');
+  $handler->override_option('style_options', array(
+    'grouping' => 'name',
+    'type' => 'ol',
+  ));
+  $handler->override_option('row_options', array(
+    'inline' => array(
+      'name' => 'name',
+      'field_number_value' => 'field_number_value',
+      'title' => 'title',
+      'changed' => 'changed',
+    ),
+    'separator' => '',
+  ));
+  $handler = $view->new_display('page', 'Admin', 'page_1');
+  $handler->override_option('fields', array(
+    'nid' => array(
+      'label' => 'Nid',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'link_class' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'target' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+        'strip_tags' => 0,
+      ),
+      'empty' => '',
+      'hide_empty' => 0,
+      'empty_zero' => 0,
+      'link_to_node' => 0,
+      'exclude' => 1,
+      'id' => 'nid',
+      'table' => 'node',
+      'field' => 'nid',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+    ),
+    'counter' => array(
+      'label' => 'Count',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'link_class' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'target' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+        'strip_tags' => 0,
+      ),
+      'empty' => '',
+      'hide_empty' => 0,
+      'empty_zero' => 0,
+      'counter_start' => '1',
+      'exclude' => 0,
+      'id' => 'counter',
+      'table' => 'views',
+      'field' => 'counter',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+    ),
+    'weight' => array(
+      'label' => 'Weight',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'link_class' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'target' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+        'strip_tags' => 0,
+      ),
+      'empty' => '',
+      'hide_empty' => 0,
+      'empty_zero' => 0,
+      'exclude' => 0,
+      'id' => 'weight',
+      'table' => 'term_data',
+      'field' => 'weight',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+    ),
+    'name' => array(
+      'label' => 'Standard',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '[weight] [name]',
+        'make_link' => 0,
+        'path' => '',
+        'link_class' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'target' => '',
+        'help' => '',
+        'trim' => 1,
+        'max_length' => '50',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+        'strip_tags' => 0,
+      ),
+      'empty' => '',
+      'hide_empty' => 0,
+      'empty_zero' => 0,
+      'link_to_taxonomy' => 0,
+      'exclude' => 0,
+      'id' => 'name',
+      'table' => 'term_data',
+      'field' => 'name',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+    ),
+    'field_number_value' => array(
+      'label' => 'Number',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'link_class' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'target' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 0,
+        'ellipsis' => 0,
+        'html' => 0,
+        'strip_tags' => 0,
+      ),
+      'empty' => '',
+      'hide_empty' => 0,
+      'empty_zero' => 0,
+      'link_to_node' => 0,
+      'label_type' => 'widget',
+      'format' => 'default',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 0,
+      'id' => 'field_number_value',
+      'table' => 'node_data_field_number',
+      'field' => 'field_number_value',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+    ),
+    'title' => array(
+      'label' => 'Title',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 1,
+        'path' => 'node/[nid]/edit',
+        'link_class' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'target' => '',
+        'help' => '',
+        'trim' => 1,
+        'max_length' => '60',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+        'strip_tags' => 0,
+      ),
+      'empty' => '',
+      'hide_empty' => 0,
+      'empty_zero' => 0,
+      'link_to_node' => 0,
+      'exclude' => 0,
+      'id' => 'title',
+      'table' => 'node',
+      'field' => 'title',
+      'relationship' => 'none',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+    ),
+    'changed' => array(
+      'label' => 'Last change',
+      'date_format' => 'small',
+      'custom_date_format' => '',
+      'exclude' => 0,
+      'id' => 'changed',
+      'table' => 'node',
+      'field' => 'changed',
+      'relationship' => 'none',
+      'override' => array(
+        'button' => 'Override',
+      ),
+    ),
+    'language' => array(
+      'label' => 'Language',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'link_class' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'target' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+        'strip_tags' => 0,
+      ),
+      'empty' => '',
+      'hide_empty' => 0,
+      'empty_zero' => 0,
+      'link_to_node' => 0,
+      'exclude' => 0,
+      'id' => 'language',
+      'table' => 'node',
+      'field' => 'language',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+    ),
+    'name_1' => array(
+      'label' => 'Name',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'link_class' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'target' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+        'strip_tags' => 0,
+      ),
+      'empty' => '',
+      'hide_empty' => 0,
+      'empty_zero' => 0,
+      'link_to_user' => 1,
+      'overwrite_anonymous' => 0,
+      'anonymous_text' => '',
+      'exclude' => 0,
+      'id' => 'name_1',
+      'table' => 'users',
+      'field' => 'name',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+    ),
+    'edit_node' => array(
+      'id' => 'edit_node',
+      'table' => 'node',
+      'field' => 'edit_node',
+    ),
+  ));
+  $handler->override_option('arguments', array(
+    'tid' => array(
+      'default_action' => 'ignore',
+      'style_plugin' => 'default_summary',
+      'style_options' => array(),
+      'wildcard' => 'all',
+      'wildcard_substitution' => 'All',
+      'title' => '%1',
+      'default_argument_type' => 'php',
+      'default_argument' => '',
+      'validate_type' => 'numeric',
+      'validate_fail' => 'empty',
+      'break_phrase' => 0,
+      'add_table' => 0,
+      'require_value' => 0,
+      'reduce_duplicates' => 0,
+      'set_breadcrumb' => 1,
+      'id' => 'tid',
+      'table' => 'term_node',
+      'field' => 'tid',
+      'relationship' => 'none',
+      'default_options_div_prefix' => '',
+      'default_argument_user' => 0,
+      'default_argument_fixed' => '',
+      'default_argument_php' => 'return 1;',
+      'validate_argument_node_type' => array(
+        'osi' => 0,
+        'book' => 0,
+        'category' => 0,
+        'page' => 0,
+        'standard' => 0,
+        'story' => 0,
+      ),
+      'validate_argument_node_access' => 0,
+      'validate_argument_nid_type' => 'nid',
+      'validate_argument_vocabulary' => array(
+        1 => 1,
+        3 => 0,
+      ),
+      'validate_argument_type' => 'tid',
+      'validate_argument_php' => '',
+      'user_argument_type' => 'either',
+      'restrict_user_roles' => 0,
+      'user_roles' => array(),
+    ),
+    'language' => array(
+      'default_action' => 'ignore',
+      'style_plugin' => 'default_summary',
+      'style_options' => array(),
+      'wildcard' => 'all',
+      'wildcard_substitution' => 'All',
+      'title' => '',
+      'breadcrumb' => '',
+      'default_argument_type' => 'fixed',
+      'default_argument' => '',
+      'validate_type' => 'none',
+      'validate_fail' => 'not found',
+      'id' => 'language',
+      'table' => 'node',
+      'field' => 'language',
+      'validate_user_argument_type' => 'uid',
+      'validate_user_roles' => array(
+        2 => 0,
+        4 => 0,
+        8 => 0,
+        7 => 0,
+        3 => 0,
+        5 => 0,
+        6 => 0,
+      ),
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+      'default_options_div_prefix' => '',
+      'default_argument_fixed' => '',
+      'default_argument_user' => 0,
+      'default_argument_php' => '',
+      'validate_argument_node_type' => array(
+        'faq' => 0,
+        'osi' => 0,
+        'book' => 0,
+        'category' => 0,
+        'comments' => 0,
+        'help' => 0,
+        'news' => 0,
+        'page' => 0,
+        'resource' => 0,
+        'simplenews' => 0,
+        'standard' => 0,
+        'story' => 0,
+      ),
+      'validate_argument_node_access' => 0,
+      'validate_argument_nid_type' => 'nid',
+      'validate_argument_vocabulary' => array(
+        3 => 0,
+        4 => 0,
+        10 => 0,
+        6 => 0,
+        1 => 0,
+        9 => 0,
+      ),
+      'validate_argument_type' => 'tid',
+      'validate_argument_transform' => 0,
+      'validate_user_restrict_roles' => 0,
+      'validate_argument_php' => '',
+    ),
+  ));
+  $handler->override_option('filters', array(
+    'type' => array(
+      'operator' => 'in',
+      'value' => array(
+        'osi' => 'osi',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'type',
+      'table' => 'node',
+      'field' => 'type',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('header', 'This is an administrative listing of indicators, allowing bulk operations.');
+  $handler->override_option('header_format', '1');
+  $handler->override_option('style_plugin', 'bulk');
+  $handler->override_option('style_options', array(
+    'grouping' => 'name',
+    'override' => 1,
+    'sticky' => 1,
+    'order' => 'asc',
+    'columns' => array(
+      'nid' => 'nid',
+      'counter' => 'counter',
+      'weight' => 'weight',
+      'name' => 'name',
+      'field_number_value' => 'field_number_value',
+      'title' => 'title',
+      'changed' => 'changed',
+      'language' => 'language',
+      'name_1' => 'name_1',
+      'edit_node' => 'edit_node',
+    ),
+    'info' => array(
+      'nid' => array(
+        'sortable' => 0,
+        'separator' => '',
+      ),
+      'counter' => array(
+        'separator' => '',
+      ),
+      'weight' => array(
+        'sortable' => 1,
+        'separator' => '',
+      ),
+      'name' => array(
+        'sortable' => 1,
+        'separator' => '',
+      ),
+      'field_number_value' => array(
+        'sortable' => 1,
+        'separator' => '',
+      ),
+      'title' => array(
+        'sortable' => 1,
+        'separator' => '',
+      ),
+      'changed' => array(
+        'sortable' => 1,
+        'separator' => '',
+      ),
+      'language' => array(
+        'sortable' => 1,
+        'separator' => '',
+      ),
+      'name_1' => array(
+        'sortable' => 0,
+        'separator' => '',
+      ),
+      'edit_node' => array(
+        'separator' => '',
+      ),
+    ),
+    'default' => 'weight',
+    'execution_type' => '1',
+    'display_type' => '0',
+    'hide_select_all' => 0,
+    'display_result' => 1,
+    'merge_single_action' => 1,
+    'views_bulk_operations_fields_action' => array(
+      'php_code' => 0,
+      'display_fields' => array(
+        'field_legal_requirements' => 'field_legal_requirements',
+        'field_number' => 'field_number',
+        'field_mandatory' => 'field_mandatory',
+        'field_standard_basic' => 'field_standard_basic',
+        'field_resource_attachment' => 'field_resource_attachment',
+        'field_resource_url' => 'field_resource_url',
+        'field_resource_notes' => 'field_resource_notes',
+        'field_id' => 'field_id',
+        'field_resources' => 'field_resources',
+      ),
+    ),
+    'operations' => array(
+      'views_bulk_operations_delete_node_action' => array(
+        'selected' => TRUE,
+        'skip_confirmation' => 0,
+      ),
+      'node_mass_update-0ccad85c1ebe4c9ceada1aa64293b080' => array(
+        'selected' => TRUE,
+        'skip_confirmation' => 0,
+      ),
+    ),
+  ));
+  $handler->override_option('row_options', array());
+  $handler->override_option('path', 'admin/content/osi');
+  $handler->override_option('menu', array(
+    'type' => 'normal',
+    'title' => 'Indicators',
+    'description' => 'Administration of Indicator content.',
+    'weight' => '0',
+    'name' => 'navigation',
+  ));
+  $handler->override_option('tab_options', array(
+    'type' => 'none',
+    'title' => '',
+    'description' => '',
+    'weight' => 0,
+    'name' => 'navigation',
+  ));
+  $handler = $view->new_display('page', 'Public', 'page_2');
+  $handler->override_option('arguments', array(
+    'tid' => array(
+      'default_action' => 'ignore',
+      'style_plugin' => 'default_summary',
+      'style_options' => array(
+        'count' => 1,
+        'override' => 0,
+        'items_per_page' => '25',
+      ),
+      'wildcard' => 'all',
+      'wildcard_substitution' => 'All',
+      'title' => '%1',
+      'default_argument_type' => 'fixed',
+      'default_argument' => '',
+      'validate_type' => 'taxonomy_term',
+      'validate_fail' => 'not found',
+      'break_phrase' => 0,
+      'add_table' => 0,
+      'require_value' => 0,
+      'reduce_duplicates' => 0,
+      'set_breadcrumb' => 1,
+      'id' => 'tid',
+      'table' => 'term_node',
+      'field' => 'tid',
+      'relationship' => 'none',
+      'default_options_div_prefix' => '',
+      'default_argument_user' => 0,
+      'default_argument_fixed' => '',
+      'default_argument_php' => '',
+      'validate_argument_node_type' => array(
+        'osi' => 0,
+        'book' => 0,
+        'category' => 0,
+        'page' => 0,
+        'standard' => 0,
+        'story' => 0,
+      ),
+      'validate_argument_node_access' => 0,
+      'validate_argument_nid_type' => 'nid',
+      'validate_argument_vocabulary' => array(
+        1 => 1,
+        3 => 0,
+      ),
+      'validate_argument_type' => 'tid',
+      'validate_argument_php' => '',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'user_argument_type' => '',
+      'restrict_user_roles' => 0,
+      'user_roles' => array(),
+    ),
+  ));
+  $handler->override_option('filters', array(
+    'type' => array(
+      'operator' => 'in',
+      'value' => array(
+        'osi' => 'osi',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'type',
+      'table' => 'node',
+      'field' => 'type',
+      'relationship' => 'none',
+    ),
+    'language' => array(
+      'operator' => 'in',
+      'value' => array(
+        '***CURRENT_LANGUAGE***' => '***CURRENT_LANGUAGE***',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'language',
+      'table' => 'node',
+      'field' => 'language',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('access', array(
+    'type' => 'role',
+    'role' => array(
+      4 => 4,
+      3 => 3,
+      5 => 5,
+    ),
+  ));
+  $handler->override_option('title', 'Indicator Listing');
+  $handler->override_option('path', 'indicators');
+  $handler->override_option('menu', array(
+    'type' => 'normal',
+    'title' => 'Indicators',
+    'description' => '',
+    'weight' => '0',
+    'name' => 'primary-links',
+  ));
+  $handler->override_option('tab_options', array(
+    'type' => 'none',
+    'title' => '',
+    'description' => '',
+    'weight' => 0,
+    'name' => 'navigation',
+  ));
+  $handler = $view->new_display('block', 'Standard Block', 'block_1');
+  $handler->override_option('fields', array(
+    'name' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+      ),
+      'link_to_taxonomy' => 0,
+      'exclude' => 1,
+      'id' => 'name',
+      'table' => 'term_data',
+      'field' => 'name',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+    ),
+    'field_number_value' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+      ),
+      'link_to_node' => 0,
+      'label_type' => 'none',
+      'format' => 'default',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 0,
+      'id' => 'field_number_value',
+      'table' => 'node_data_field_number',
+      'field' => 'field_number_value',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+    ),
+    'title' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+      ),
+      'link_to_node' => 1,
+      'exclude' => 0,
+      'id' => 'title',
+      'table' => 'node',
+      'field' => 'title',
+      'relationship' => 'none',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+    ),
+  ));
+  $handler->override_option('arguments', array(
+    'tid' => array(
+      'default_action' => 'default',
+      'style_plugin' => 'default_summary',
+      'style_options' => array(
+        'count' => 0,
+        'override' => 0,
+        'items_per_page' => '25',
+      ),
+      'wildcard' => 'all',
+      'wildcard_substitution' => 'All',
+      'title' => '%1',
+      'default_argument_type' => 'php',
+      'default_argument' => '',
+      'validate_type' => 'none',
+      'validate_fail' => 'summary asc',
+      'break_phrase' => 0,
+      'add_table' => 0,
+      'require_value' => 0,
+      'reduce_duplicates' => 0,
+      'set_breadcrumb' => 0,
+      'id' => 'tid',
+      'table' => 'term_node',
+      'field' => 'tid',
+      'relationship' => 'none',
+      'default_options_div_prefix' => '',
+      'default_argument_user' => 0,
+      'default_argument_fixed' => '',
+      'default_argument_php' => 'if ((arg(0) == \'node\') && (is_numeric(arg(1)) && !arg(2))) {
+  $tid = current(array_keys(nat_get_terms(arg(1))));
+  return $tid;
+}
+
+',
+      'validate_argument_node_type' => array(
+        'osi' => 0,
+        'book' => 0,
+        'category' => 0,
+        'help' => 0,
+        'page' => 0,
+        'standard' => 0,
+        'story' => 0,
+      ),
+      'validate_argument_node_access' => 0,
+      'validate_argument_nid_type' => 'nid',
+      'validate_argument_vocabulary' => array(
+        1 => 1,
+        3 => 0,
+        4 => 0,
+      ),
+      'validate_argument_type' => 'tid',
+      'validate_argument_php' => '',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'user_argument_type' => 'uid',
+      'restrict_user_roles' => 0,
+      'user_roles' => array(),
+    ),
+  ));
+  $handler->override_option('access', array(
+    'type' => 'role',
+    'role' => array(
+      2 => 2,
+      4 => 4,
+      3 => 3,
+      5 => 5,
+    ),
+  ));
+  $handler->override_option('title', 'Associated Indicators');
+  $handler->override_option('link_display', 'page_2');
+  $handler->override_option('style_plugin', 'default');
+  $handler->override_option('style_options', NULL);
+  $handler->override_option('row_plugin', 'node');
+  $handler->override_option('row_options', array(
+    'teaser' => 0,
+    'links' => 1,
+    'comments' => 0,
+  ));
+  $handler->override_option('block_description', '');
+  $handler->override_option('block_caching', -1);
+
+  $views[$view->name] = $view;
+
+  // Exported view: Standards
+  $view = new view;
+  $view->name = 'Standards';
+  $view->description = 'A listing of standards';
+  $view->tag = '';
+  $view->base_table = 'node';
+  $view->core = 0;
+  $view->api_version = '2';
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+  $handler = $view->new_display('default', 'Defaults', 'default');
+  $handler->override_option('fields', array(
+    'title' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+      ),
+      'link_to_node' => 1,
+      'exclude' => 0,
+      'id' => 'title',
+      'table' => 'node',
+      'field' => 'title',
+      'relationship' => 'none',
+    ),
+    'tid' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+      ),
+      'type' => 'separator',
+      'separator' => ', ',
+      'empty' => '',
+      'link_to_taxonomy' => 0,
+      'limit' => 0,
+      'vids' => array(
+        3 => 3,
+        4 => 0,
+        1 => 0,
+      ),
+      'exclude' => 1,
+      'id' => 'tid',
+      'table' => 'term_node',
+      'field' => 'tid',
+      'override' => array(
+        'button' => 'Override',
+      ),
+      'relationship' => 'none',
+    ),
+    'field_legal_requirements_value' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'link_class' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'target' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+        'strip_tags' => 0,
+      ),
+      'empty' => '',
+      'hide_empty' => 0,
+      'empty_zero' => 0,
+      'link_to_node' => 0,
+      'label_type' => 'none',
+      'format' => 'default',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 0,
+      'id' => 'field_legal_requirements_value',
+      'table' => 'node_data_field_legal_requirements',
+      'field' => 'field_legal_requirements_value',
+      'override' => array(
+        'button' => 'Override',
+      ),
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('sorts', array(
+    'field_id_value' => array(
+      'order' => 'ASC',
+      'delta' => -1,
+      'id' => 'field_id_value',
+      'table' => 'node_data_field_id',
+      'field' => 'field_id_value',
+      'override' => array(
+        'button' => 'Override',
+      ),
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('arguments', array(
+    'tid' => array(
+      'default_action' => 'ignore',
+      'style_plugin' => 'default_summary',
+      'style_options' => array(),
+      'wildcard' => 'all',
+      'wildcard_substitution' => 'All',
+      'title' => '',
+      'default_argument_type' => 'fixed',
+      'default_argument' => '',
+      'validate_type' => 'taxonomy_term',
+      'validate_fail' => 'ignore',
+      'break_phrase' => 0,
+      'add_table' => 0,
+      'require_value' => 0,
+      'reduce_duplicates' => 0,
+      'set_breadcrumb' => 1,
+      'id' => 'tid',
+      'table' => 'term_node',
+      'field' => 'tid',
+      'override' => array(
+        'button' => 'Override',
+      ),
+      'relationship' => 'none',
+      'default_options_div_prefix' => '',
+      'default_argument_user' => 0,
+      'default_argument_fixed' => '',
+      'default_argument_php' => '',
+      'validate_argument_node_type' => array(
+        'osi' => 0,
+        'category' => 0,
+        'page' => 0,
+        'standard' => 0,
+        'story' => 0,
+      ),
+      'validate_argument_node_access' => 0,
+      'validate_argument_nid_type' => 'nid',
+      'validate_argument_vocabulary' => array(
+        3 => 3,
+        1 => 0,
+      ),
+      'validate_argument_type' => 'tid',
+      'user_argument_type' => 'uid',
+      'restrict_user_roles' => 0,
+      'user_roles' => array(),
+      'validate_argument_php' => '',
+    ),
+  ));
+  $handler->override_option('filters', array(
+    'type' => array(
+      'operator' => 'in',
+      'value' => array(
+        'standard' => 'standard',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'type',
+      'table' => 'node',
+      'field' => 'type',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('access', array(
+    'type' => 'none',
+  ));
+  $handler->override_option('cache', array(
+    'type' => 'none',
+  ));
+  $handler->override_option('title', 'Standards');
+  $handler->override_option('items_per_page', 0);
+  $handler->override_option('distinct', 0);
+  $handler->override_option('style_plugin', 'list');
+  $handler->override_option('style_options', array(
+    'grouping' => 'tid',
+    'type' => 'ol',
+  ));
+  $handler->override_option('row_options', array(
+    'inline' => array(
+      'title' => 'title',
+      'name' => 'name',
+    ),
+    'separator' => '',
+  ));
+  $handler = $view->new_display('page', 'Public Listing', 'page_1');
+  $handler->override_option('access', array(
+    'type' => 'role',
+    'role' => array(
+      4 => 4,
+      3 => 3,
+      5 => 5,
+    ),
+  ));
+  $handler->override_option('path', 'standards');
+  $handler->override_option('menu', array(
+    'type' => 'normal',
+    'title' => 'Standards',
+    'description' => 'A listing of the standards',
+    'weight' => '0',
+    'name' => 'primary-links',
+  ));
+  $handler->override_option('tab_options', array(
+    'type' => 'none',
+    'title' => '',
+    'description' => '',
+    'weight' => 0,
+    'name' => 'navigation',
+  ));
+  $handler = $view->new_display('page', 'Administrative Operations', 'page_2');
+  $handler->override_option('fields', array(
+    'title' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+      ),
+      'link_to_node' => 0,
+      'exclude' => 0,
+      'id' => 'title',
+      'table' => 'node',
+      'field' => 'title',
+      'relationship' => 'none',
+    ),
+    'body' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+      ),
+      'exclude' => 0,
+      'id' => 'body',
+      'table' => 'node_revisions',
+      'field' => 'body',
+      'relationship' => 'none',
+    ),
+    'view_node' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+      ),
+      'text' => 'Go',
+      'exclude' => 0,
+      'id' => 'view_node',
+      'table' => 'node',
+      'field' => 'view_node',
+      'relationship' => 'none',
+    ),
+    'tid' => array(
+      'label' => 'Category',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+      ),
+      'type' => 'separator',
+      'separator' => ', ',
+      'empty' => '',
+      'link_to_taxonomy' => 1,
+      'limit' => 1,
+      'vids' => array(
+        3 => 3,
+        5 => 5,
+        4 => 0,
+        1 => 0,
+      ),
+      'exclude' => 0,
+      'id' => 'tid',
+      'table' => 'term_node',
+      'field' => 'tid',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('style_plugin', 'bulk');
+  $handler->override_option('style_options', array(
+    'grouping' => '',
+    'override' => 1,
+    'sticky' => 0,
+    'order' => 'asc',
+    'columns' => array(
+      'title' => 'title',
+      'body' => 'body',
+      'view_node' => 'view_node',
+      'tid' => 'tid',
+    ),
+    'info' => array(
+      'title' => array(
+        'sortable' => 1,
+        'separator' => '',
+      ),
+      'body' => array(
+        'separator' => '',
+      ),
+      'view_node' => array(
+        'separator' => '',
+      ),
+      'tid' => array(
+        'separator' => '',
+      ),
+    ),
+    'default' => '-1',
+    'execution_type' => '1',
+    'display_type' => '0',
+    'display_result' => 1,
+    'merge_single_action' => 1,
+    'operations' => array(
+      'c1c34a331fb39c6ad9130862698bd354' => array(
+        'selected' => TRUE,
+        'skip_confirmation' => 0,
+      ),
+    ),
+  ));
+  $handler->override_option('row_options', array());
+  $handler->override_option('path', 'admin/content/standards');
+  $handler->override_option('menu', array(
+    'type' => 'normal',
+    'title' => 'Standards',
+    'description' => 'Bulk Update of Standards content.',
+    'weight' => '0',
+    'name' => 'navigation',
+  ));
+  $handler->override_option('tab_options', array(
+    'type' => 'none',
+    'title' => '',
+    'description' => '',
+    'weight' => 0,
+    'name' => 'navigation',
+  ));
+  $handler = $view->new_display('block', 'Category Block', 'block_1');
+  $handler->override_option('fields', array(
+    'title' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+      ),
+      'link_to_node' => 1,
+      'exclude' => 0,
+      'id' => 'title',
+      'table' => 'node',
+      'field' => 'title',
+      'relationship' => 'none',
+    ),
+    'tid' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+      ),
+      'type' => 'separator',
+      'separator' => ', ',
+      'empty' => '',
+      'link_to_taxonomy' => 0,
+      'limit' => 0,
+      'vids' => array(
+        3 => 3,
+        4 => 0,
+        1 => 0,
+      ),
+      'exclude' => 1,
+      'id' => 'tid',
+      'table' => 'term_node',
+      'field' => 'tid',
+      'override' => array(
+        'button' => 'Override',
+      ),
+      'relationship' => 'none',
+    ),
+    'field_legal_requirements_value' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'link_class' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'target' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+        'strip_tags' => 0,
+      ),
+      'empty' => '',
+      'hide_empty' => 0,
+      'empty_zero' => 0,
+      'link_to_node' => 0,
+      'label_type' => 'none',
+      'format' => 'default',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 0,
+      'id' => 'field_legal_requirements_value',
+      'table' => 'node_data_field_legal_requirements',
+      'field' => 'field_legal_requirements_value',
+      'override' => array(
+        'button' => 'Override',
+      ),
+      'relationship' => 'none',
+    ),
+    'nid' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'absolute' => 0,
+        'link_class' => '',
+        'alt' => '',
+        'rel' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'target' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+        'strip_tags' => 0,
+      ),
+      'empty' => '',
+      'hide_empty' => 0,
+      'empty_zero' => 0,
+      'hide_alter_empty' => 1,
+      'link_to_node' => 0,
+      'exclude' => 0,
+      'id' => 'nid',
+      'table' => 'node',
+      'field' => 'nid',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('arguments', array(
+    'tid' => array(
+      'default_action' => 'default',
+      'style_plugin' => 'default_summary',
+      'style_options' => array(
+        'count' => 1,
+        'override' => 0,
+        'items_per_page' => '25',
+      ),
+      'wildcard' => 'all',
+      'wildcard_substitution' => 'All',
+      'title' => '%1',
+      'default_argument_type' => 'php',
+      'default_argument' => '',
+      'validate_type' => 'none',
+      'validate_fail' => 'summary asc',
+      'break_phrase' => 1,
+      'add_table' => 0,
+      'require_value' => 0,
+      'reduce_duplicates' => 1,
+      'set_breadcrumb' => 0,
+      'id' => 'tid',
+      'table' => 'term_node',
+      'field' => 'tid',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+      'default_options_div_prefix' => '',
+      'default_argument_user' => 0,
+      'default_argument_fixed' => '',
+      'default_argument_php' => 'if ((arg(0) == \'node\') && (is_numeric(arg(1)) && !arg(2))) {
+  $term = current(nat_get_terms(arg(1)));
+  $children = taxonomy_get_tree($term->vid,$term->tid);
+  if (1 < count($children)) {
+    $tids = array();
+    foreach($children as $child) {
+      $tids[] = $child->tid;
+    }   
+    return implode(\'+\',$tids);
+  }
+  else return $term->tid;
+}
+
+',
+      'validate_argument_node_type' => array(
+        'osi' => 0,
+        'book' => 0,
+        'category' => 0,
+        'help' => 0,
+        'page' => 0,
+        'standard' => 0,
+        'story' => 0,
+      ),
+      'validate_argument_node_access' => 0,
+      'validate_argument_nid_type' => 'nid',
+      'validate_argument_vocabulary' => array(
+        3 => 3,
+        4 => 0,
+        1 => 0,
+      ),
+      'validate_argument_type' => 'tid',
+      'user_argument_type' => 'uid',
+      'restrict_user_roles' => 0,
+      'user_roles' => array(),
+      'validate_argument_php' => '',
+    ),
+  ));
+  $handler->override_option('block_description', '');
+  $handler->override_option('block_caching', -1);
+  $handler = $view->new_display('page', 'Legal Standards', 'page_3');
+  $handler->override_option('filters', array(
+    'type' => array(
+      'operator' => 'in',
+      'value' => array(
+        'standard' => 'standard',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'type',
+      'table' => 'node',
+      'field' => 'type',
+      'relationship' => 'none',
+    ),
+    'field_legal_requirements_value' => array(
+      'operator' => '=',
+      'value' => array(
+        'value' => '1',
+        'min' => '',
+        'max' => '',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'field_legal_requirements_value',
+      'table' => 'node_data_field_legal_requirements',
+      'field' => 'field_legal_requirements_value',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+    ),
+    'language' => array(
+      'operator' => 'in',
+      'value' => array(
+        '***CURRENT_LANGUAGE***' => '***CURRENT_LANGUAGE***',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'language',
+      'table' => 'node',
+      'field' => 'language',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('title', 'Legal Standards');
+  $handler->override_option('header', 'This page shows a list of all standards that include legal requirements.');
+  $handler->override_option('header_format', '4');
+  $handler->override_option('header_empty', 0);
+  $handler->override_option('path', 'legal');
+  $handler->override_option('menu', array(
+    'type' => 'normal',
+    'title' => 'Legal Requirements',
+    'description' => 'Standards with legal requirements',
+    'weight' => '5',
+    'name' => 'menu-main',
+  ));
+  $handler->override_option('tab_options', array(
+    'type' => 'none',
+    'title' => '',
+    'description' => '',
+    'weight' => 0,
+    'name' => 'navigation',
+  ));
+
+  $views[$view->name] = $view;
+
+  // Exported view: category
+  $view = new view;
+  $view->name = 'category';
+  $view->description = '';
+  $view->tag = '';
+  $view->base_table = 'node';
+  $view->core = 6;
+  $view->api_version = '2';
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+  $handler = $view->new_display('default', 'Defaults', 'default');
+  $handler->override_option('fields', array(
+    'title' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'absolute' => 0,
+        'link_class' => '',
+        'alt' => '',
+        'rel' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'target' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+        'strip_tags' => 0,
+      ),
+      'empty' => '',
+      'hide_empty' => 0,
+      'empty_zero' => 0,
+      'hide_alter_empty' => 1,
+      'link_to_node' => 1,
+      'exclude' => 0,
+      'id' => 'title',
+      'table' => 'node',
+      'field' => 'title',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('filters', array(
+    'type' => array(
+      'operator' => 'in',
+      'value' => array(
+        'category' => 'category',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'type',
+      'table' => 'node',
+      'field' => 'type',
+      'relationship' => 'none',
+    ),
+    'status' => array(
+      'operator' => '=',
+      'value' => '1',
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'status',
+      'table' => 'node',
+      'field' => 'status',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('access', array(
+    'type' => 'none',
+  ));
+  $handler->override_option('cache', array(
+    'type' => 'none',
+  ));
+  $handler = $view->new_display('block', 'Block', 'block_1');
+  $handler->override_option('fields', array(
+    'field_video_embed' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'absolute' => 0,
+        'link_class' => '',
+        'alt' => '',
+        'rel' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'target' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+        'strip_tags' => 0,
+      ),
+      'empty' => '',
+      'hide_empty' => 0,
+      'empty_zero' => 0,
+      'hide_alter_empty' => 1,
+      'link_to_node' => 0,
+      'label_type' => 'none',
+      'format' => 'video_url',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 1,
+      'id' => 'field_video_embed',
+      'table' => 'node_data_field_video',
+      'field' => 'field_video_embed',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+    ),
+    'field_video_image_fid' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 1,
+        'path' => '[field_video_embed]',
+        'absolute' => 0,
+        'link_class' => '',
+        'alt' => '',
+        'rel' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'target' => '_blank',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+        'strip_tags' => 0,
+      ),
+      'empty' => '',
+      'hide_empty' => 0,
+      'empty_zero' => 0,
+      'hide_alter_empty' => 1,
+      'link_to_node' => 0,
+      'label_type' => 'none',
+      'format' => 'image_plain',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 0,
+      'id' => 'field_video_image_fid',
+      'table' => 'node_data_field_video_image',
+      'field' => 'field_video_image_fid',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('arguments', array(
+    'nid' => array(
+      'default_action' => 'default',
+      'style_plugin' => 'default_summary',
+      'style_options' => array(),
+      'wildcard' => 'all',
+      'wildcard_substitution' => 'All',
+      'title' => '',
+      'breadcrumb' => '',
+      'default_argument_type' => 'node',
+      'default_argument' => '',
+      'validate_type' => 'none',
+      'validate_fail' => 'not found',
+      'break_phrase' => 0,
+      'not' => 0,
+      'id' => 'nid',
+      'table' => 'node',
+      'field' => 'nid',
+      'validate_user_argument_type' => 'uid',
+      'validate_user_roles' => array(
+        2 => 0,
+        4 => 0,
+        8 => 0,
+        7 => 0,
+        9 => 0,
+        14 => 0,
+        3 => 0,
+        10 => 0,
+        11 => 0,
+        12 => 0,
+        13 => 0,
+        5 => 0,
+        15 => 0,
+        6 => 0,
+      ),
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+      'default_options_div_prefix' => '',
+      'default_taxonomy_tid_term_page' => 0,
+      'default_taxonomy_tid_node' => 0,
+      'default_taxonomy_tid_limit' => 0,
+      'default_taxonomy_tid_vids' => array(
+        11 => 0,
+        3 => 0,
+        12 => 0,
+        4 => 0,
+        10 => 0,
+        6 => 0,
+        1 => 0,
+        9 => 0,
+      ),
+      'default_argument_user' => 0,
+      'default_argument_fixed' => '',
+      'default_argument_php' => '',
+      'validate_argument_node_type' => array(
+        'faq' => 0,
+        'flashnode' => 0,
+        'osi' => 0,
+        'forum' => 0,
+        'book' => 0,
+        'category' => 0,
+        'comments' => 0,
+        'event_cck' => 0,
+        'help' => 0,
+        'news' => 0,
+        'page' => 0,
+        'resource' => 0,
+        'simplenews' => 0,
+        'standard' => 0,
+        'story' => 0,
+      ),
+      'validate_argument_node_access' => 0,
+      'validate_argument_nid_type' => 'nid',
+      'validate_argument_vocabulary' => array(
+        11 => 0,
+        3 => 0,
+        12 => 0,
+        4 => 0,
+        10 => 0,
+        6 => 0,
+        1 => 0,
+        9 => 0,
+      ),
+      'validate_argument_type' => 'tid',
+      'validate_argument_transform' => 0,
+      'validate_user_restrict_roles' => 0,
+      'validate_argument_php' => '',
+    ),
+  ));
+  $handler->override_option('items_per_page', 1);
+  $handler->override_option('block_description', '');
+  $handler->override_option('block_caching', -1);
+  $handler = $view->new_display('page', 'Page', 'page_1');
+  $handler->override_option('arguments', array(
+    'nid' => array(
+      'default_action' => 'ignore',
+      'style_plugin' => 'default_summary',
+      'style_options' => array(),
+      'wildcard' => 'all',
+      'wildcard_substitution' => 'All',
+      'title' => '',
+      'breadcrumb' => '',
+      'default_argument_type' => 'fixed',
+      'default_argument' => '',
+      'validate_type' => 'none',
+      'validate_fail' => 'not found',
+      'break_phrase' => 0,
+      'not' => 0,
+      'id' => 'nid',
+      'table' => 'node',
+      'field' => 'nid',
+      'validate_user_argument_type' => 'uid',
+      'validate_user_roles' => array(
+        2 => 0,
+        4 => 0,
+        8 => 0,
+        7 => 0,
+        9 => 0,
+        14 => 0,
+        3 => 0,
+        10 => 0,
+        11 => 0,
+        12 => 0,
+        13 => 0,
+        5 => 0,
+        15 => 0,
+        6 => 0,
+      ),
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+      'default_options_div_prefix' => '',
+      'default_taxonomy_tid_term_page' => 0,
+      'default_taxonomy_tid_node' => 0,
+      'default_taxonomy_tid_limit' => 0,
+      'default_taxonomy_tid_vids' => array(
+        11 => 0,
+        3 => 0,
+        12 => 0,
+        4 => 0,
+        10 => 0,
+        6 => 0,
+        1 => 0,
+        9 => 0,
+      ),
+      'default_argument_user' => 0,
+      'default_argument_fixed' => '',
+      'default_argument_php' => '',
+      'validate_argument_node_type' => array(
+        'faq' => 0,
+        'flashnode' => 0,
+        'osi' => 0,
+        'forum' => 0,
+        'book' => 0,
+        'category' => 0,
+        'comments' => 0,
+        'event_cck' => 0,
+        'help' => 0,
+        'news' => 0,
+        'page' => 0,
+        'resource' => 0,
+        'simplenews' => 0,
+        'standard' => 0,
+        'story' => 0,
+      ),
+      'validate_argument_node_access' => 0,
+      'validate_argument_nid_type' => 'nid',
+      'validate_argument_vocabulary' => array(
+        11 => 0,
+        3 => 0,
+        12 => 0,
+        4 => 0,
+        10 => 0,
+        6 => 0,
+        1 => 0,
+        9 => 0,
+      ),
+      'validate_argument_type' => 'tid',
+      'validate_argument_transform' => 0,
+      'validate_user_restrict_roles' => 0,
+      'validate_argument_php' => '',
+    ),
+  ));
+  $handler->override_option('items_per_page', 1);
+  $handler->override_option('path', 'category_video');
+  $handler->override_option('menu', array(
+    'type' => 'none',
+    'title' => '',
+    'description' => '',
+    'weight' => 0,
+    'name' => 'navigation',
+  ));
+  $handler->override_option('tab_options', array(
+    'type' => 'none',
+    'title' => '',
+    'description' => '',
+    'weight' => 0,
+    'name' => 'navigation',
+  ));
+
+  $views[$view->name] = $view;
+
+  return $views;
+}

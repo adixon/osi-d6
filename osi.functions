@@ -1,0 +1,85 @@
+function _osi_categories($lang = NULL, $ctid = 0) {
+function osi_help($path ='', $args = array()) {
+function osi_perm() {
+function osi_access($op, $node, $account) {
+function _osi_node_info() {
+function osi_menu() {
+function osi_category_access($term) {
+function osi_filter($op, $delta = 0, $format = -1, $text = '') {
+function osi_filter_tips($delta, $format, $long = FALSE) {
+function osi_theme() {
+function osi_block($op = 'list', $delta = 0) {
+function _osi_category_status($rid,$ctid) {
+function osi_user($op, &$edit, &$account, $category = NULL) {
+function osi_admin_settings_form() {
+function osi_form(&$node, &$param) {
+function osi_nodeform_submit_handler($form, &$form_state) {
+function osi_insert($node) {
+function osi_update($node) {
+function osi_delete(&$node) {
+function osi_load($node) {
+function osi_view(&$node, $teaser = FALSE, $page = FALSE) {
+function osi_forms($form_id, $args) {
+function osi_render_answers_form(&$form_state, $node, $previous) {
+function osi_ajax_update($nid = 0, $result = 0) {
+function osi_ajax_status_standard($node) {
+function osi_render_answers_form_submit($form, &$form_state) {
+function osi_scores($rids, $filter_tid = 0) {
+function _osi_term_sort($a, $b) {
+function osi_scores_aggregate($style, $standard_tid, $filter_users, $details) {
+function theme_osi_options_title($text,$path) {
+function theme_osi_scores_summary($scores) {
+function osi_list($account = NULL, $filter_string = '') {
+function osi_report_combined($account = NULL, $filter_tid = 0, $rid_list = '') {
+function osi_report_chart($account = NULL, $filter_tid = 0, $rid_list = '', $page = TRUE) {
+function _osi_report_chart($scores,$filtered) {
+function osi_progress($rid, $tid = 0, $formatted = 1) {
+function osi_report_table($account = NULL, $filter_tid = 0, $rid_list = '', $page = TRUE) {
+function osi_report_aggregate($style = 0, $filter_tid = 0, $details = FALSE, $percent = FALSE ) {
+function osi_percent($rdata,$rtotal) {
+function osi_report_users($variable = 'name') {
+function theme_osi_answer_help($help) {
+function theme_osi_table($header, $rows, $class) {
+function theme_osi_score_row($score, $standard) {
+function theme_osi_indicator_row($indct,$indicator,$filter) {
+function theme_osi_aggregate_score_row($score, $standard, $style, $percent) {
+function theme_osi_aggregate_score_row_details($score, $standard, $style, $total = FALSE) {
+function osi_standard_data(&$term) { 
+function osi_standard_indicators(&$standard, $rid, $answered = -1) { 
+function osi_standard_indicator_data($tid) {
+function osi_standard_score($tid, $rid) { 
+function _osi_standard_score($tid,$rid,$indicators) {
+function osi_standard_scores($tid, $rids, $details = FALSE) { 
+function _osi_rating($score,$ratings) {
+function theme_osi_answered($node, $answer, $page) {
+function _osi_term($node,$vid = NULL) {
+function _osi_get_vid() {
+function _osi_get_answers($na = FALSE) {
+function theme_osi_render_answers_form($form) {
+function theme_osi_last_changed($time = NULL) {
+function osi_rid($tid = NULL, $uid = NULL, $new = FALSE) {
+function osi_nid($tid) {
+function osi_tid($nid) {
+function osi_node_category_tid($node) {
+function osi_category($nid) {
+function osi_nodeapi(&$node, $op, $a3, $a4) {
+function osi_feedback_form_submit( &$form, &$form_state ){
+function osi_category_colour($tid) {
+function osi_osi_nodes($tids) {
+function osi_standard_terms($tid) { // return a list of nat-related terms of the standards in this category
+function osi_nat_get_terms($nids) {
+function _osi_filter($text, $format = 0) {
+function _osi_teaser($match) {
+function osi_complete($tid) {
+function osi_compare($account, $category_tid = 0, $new = FALSE) {
+function osi_compare_form(&$form_state, $account, $current_progress, $category_tid) {
+function theme_osi_compare_form($form) {
+function osi_compare_form_validate($form, &$form_state) {
+function osi_compare_form_submit($form, &$form_state) {
+function theme_osi_score_label($i) {
+function osi_mail_alter(&$message) {
+function osi_form_alter(&$form, $form_state, $form_id) {
+function osi_user_filter_form(&$form_state, $edit) {
+function register_validation_function(&$form, &$form_state) {
+function osi_emfield_providers($module, $provider = NULL) {
+function _osi_rid_list($rid_list, $uid) {

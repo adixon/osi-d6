@@ -1,0 +1,35 @@
+
+.osi-category-block {
+  width: 155px;
+  float: left;
+  margin: 0 5px 20px 0;
+  padding-right: 2px;
+}
+.osi-category-name {
+  height: 40px;
+  width: 150px;
+  font-weight: bold;
+  margin-top: 6px;
+}
+.osi-category-icon {
+  width: 150px;
+  height: 100px;
+  background-size: 154px 508px;
+  background: url(images/icons.jpg) no-repeat;
+}
+.osi-category-icon-81,
+.osi-category-icon-46 {
+  background-position: 0px 0px;
+}
+.osi-category-icon-101,
+.osi-category-icon-47 {
+  background-position: 0 -100px;
+}
+.osi-category-icon-105,
+.osi-category-icon-48 {
+  background-position: 0 -200px;
+}
+.osi-category-icon-106,
+.osi-category-icon-49 {
+  background-position: 0 -300px;
+}

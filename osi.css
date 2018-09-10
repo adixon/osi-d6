@@ -1,0 +1,99 @@
+.osi-label {
+  display: none;
+}
+form.osi-answers-form {
+  padding: 0.5em 0.5em;
+  margin: 0 0 0.5em 0;
+}
+.node-type-osi { 
+  background-color:#F5F6F7;
+  border:1px solid #DEDEDE;
+  margin:0pt 0pt 0.5em;
+  padding:5px;
+}
+dl.osi-answer-help {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  background-color: #FF9;
+  padding: 0.5em 0.5em;
+}
+.osi-body {
+  padding: 0 1em 0 2em;
+  font-style: italic;
+}
+.osi-indicator {
+  text-indent: -1.5em;
+  margin: 0.5em 0.5em 0.5em 1.5em;
+/*  font-style: italic; */
+  font-size: 110%;
+  line-height: 1.4em;
+}
+.osi-changed {
+  clear: both;
+  font-size: 75%;
+}
+.osi-changed strong {
+  font-size: 120%;
+}
+.osi-answer-help-title a:visited,
+.osi-answer-help-title a:link {
+  z-index: 100;
+  display: block;
+  width: 60px;
+  height: 20px;
+  padding: 0 0;
+  margin: -20px 0 0 0;
+  color: transparent;
+}
+.osi-answer-help-title h3 {
+  z-index: 0;
+  width: 60px;
+  height: 20px;
+  margin: 0 0;
+  padding: 0 0;
+  text-align: center;
+  /* position: relative;
+  left: 20px;
+  top: -24px;
+  margin-bottom: -16px;
+  margin-top: 8px; */
+}
+.osi-answer-help-title a:hover {
+  color: #333;
+  opacity:0.2;
+  filter:alpha(opacity=20); /* For IE8 and earlier */
+  text-decoration: none;
+}
+dl.osi-user dt a {
+  font-weight: bold;
+  color: #336299;
+}
+dl.osi-user dt a:hover {
+  cursor: pointer;
+}
+dl.osi-user dt {
+  padding-top: 3px;
+}
+dl.osi-user dd {
+  margin-left: 0;
+  padding-left: 1em;
+  padding-top: 3px;
+}
+#block-osi-1 {
+  padding: 4px 8px;
+  margin: 4px 8px;
+  display: none;
+  width: 300px;
+}
+div.show-hide .ui-icon {
+  float: left;
+  margin: 2px .5em 6px 2px;
+}
+
+#osi-user-filter-form div.form-item label {
+  display: inline;
+}
+#osi-user-filter-form div.form-item {
+  display: inline;
+  margin-right: 1em;
+}

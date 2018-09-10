@@ -1,0 +1,204 @@
+<?php 
+// $Id: osi.install Exp $
+
+/**
+ * @file
+ *
+ * Installation  file for osi module
+ *
+ */
+
+/**
+ * Implementation of hook_install()
+ */
+
+function osi_install() {
+  drupal_install_schema('osi');
+}
+
+function osi_schema() {
+
+/**
+ * Result sets per user
+ * Keep track of various status indicators here.
+ */
+  $schema['osi_take'] = array(
+    'fields' => array(
+      'rid' => array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE),
+      'uid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+      'tid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
+      'created' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+      'changed' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+      'last_nid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+      'status' => array('type' => 'int', 'not null' => TRUE, 'unsigned' => TRUE, 'default' => 0, 'size' => 'tiny'), 
+      'status_check' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+    ),
+    'primary key' => array('rid'),
+    'indexes' => array(
+      'uid' => array('uid'),
+      'uidtid' => array('uid','tid'),
+    ),
+  );
+
+/**
+ * Results for osi quiz.
+ */
+
+  $schema['osi_rid'] = array(
+    'fields' => array(
+      'nid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+      'result' => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0),
+      'rid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+      'created' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+      'changed' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+    ),
+    'primary key' => array('rid', 'nid'),
+  );
+    
+/**
+ * Long indicator question option, and whether an answer allows n/a
+ */
+
+  $schema['osi_node'] = array(
+    'fields' => array(
+      'nid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+      'indicator' => array('type' => 'text'),
+      'allow_na' => array('type' => 'int', 'not null' => TRUE, 'unsigned' => TRUE, 'default' => 0, 'size' => 'tiny'), 
+      'standard' => array('type' => 'int', 'not null' => TRUE, 'unsigned' => TRUE, 'default' => 0, 'size' => 'tiny'), 
+      'exceed' => array('type' => 'int', 'not null' => TRUE, 'unsigned' => TRUE, 'default' => 0, 'size' => 'tiny'), 
+    ),
+    'primary key' => array('nid'),
+  );
+
+/* private cache table */
+  $schema['cache_osi'] = drupal_get_schema_unprocessed('system', 'cache');
+  $schema['cache_osi']['description'] = 'Cache table for the OSI module to store scores per standard, rid.';
+  return $schema;
+}
+
+/**
+ * Implementation of hook_uninstall()
+ */
+function osi_uninstall() {
+  // Remove tables.
+  drupal_uninstall_schema('osi');
+
+  // Erase any saved variable settings from the database.
+  // db_query("DELETE FROM {variable} WHERE name LIKE '%s%%'", 'osi_');
+  
+  // Truncate the cache so users don't run into any unexpected errors.
+  cache_clear_all('variables', 'cache');
+  
+  // Inform the user that uninstall was sucessful.
+  drupal_set_message(t("The OSI self-assessment question module, it's settings, and all saved questions were successfully removed."));
+}
+
+function osi_update_1() {
+  $ret = array();
+  db_drop_table($ret, 'osi_uid');
+  $schema = osi_schema();
+  db_create_table($ret, 'osi_rid',$schema['osi_rid']);
+  db_create_table($ret, 'osi_take',$schema['osi_take']);
+  return $ret;
+}
+
+function osi_update_2() {
+  $ret = array();
+  $schema = osi_schema();
+  db_create_table($ret, 'osi_weight',$schema['osi_weight']);
+  return $ret;
+}
+
+function osi_update_3() {
+  $ret = array();
+  // $schema = osi_schema();
+  // db_query('DROP TABLE {osi_weight}');
+  $ret[] = update_sql("ALTER TABLE {osi_node} ADD COLUMN standard tinyint unsigned NOT NULL default '0'");
+  $ret[] = update_sql("ALTER TABLE {osi_node} ADD COLUMN exceed tinyint unsigned NOT NULL default '0'");
+  return $ret;
+}
+
+function osi_update_4() {
+  $ret = array();
+  $schema = osi_schema();
+  db_create_table($ret, 'cache_osi',$schema['cache_osi']);
+  return $ret;
+}
+
+function osi_update_5() {
+  $ret = array();
+  $ret[] = update_sql("ALTER TABLE {osi_take} ADD COLUMN status_check int unsigned NOT NULL default '0'");
+  return $ret;
+}
+
+/* add a new 'take per category' table */
+
+function osi_update_6001() {
+  $ret = array();
+  db_add_field($ret, 'osi_take', 'tid', array('type' => 'int'));
+  db_add_index($ret, 'osi_take', 'uidtid', array('uid','tid'));
+  return $ret;
+}
+
+/* now fix the osi_rid and osi_take tables */
+function osi_update_6003() {
+  // for each of the old tid-less rids, create and assign new rids per category
+  // start by getting a map of all the standards to their corresponding category
+  $categories = array(
+    'en' => array_keys(_osi_categories('en')),
+    'fr' => array_keys(_osi_categories('fr')),
+  );
+  // generate lookup arrays to get from an indicator/osi nid to a catgegory parent tid
+  $standard_category = $osi_standard = array();
+  $result = db_query("SELECT osi.nid as osinid, standard.nid as standardnid FROM {node} osi INNER JOIN {term_node} t ON (osi.vid = t.vid) INNER JOIN {nat} standard ON (t.tid = standard.tid AND standard.vid = 1) WHERE osi.type = 'osi'");
+  while($os = db_fetch_object($result)) {
+    $osi_standard[$os->osinid] = $os->standardnid;
+  }
+  $result = db_query("SELECT standard.nid, h.parent FROM {node} standard INNER JOIN {term_node} t ON (standard.vid = t.vid) INNER JOIN {term_hierarchy} h ON (t.tid = h.tid) WHERE standard.type = 'standard'");
+  while($sc = db_fetch_object($result)) {
+    $standard_category[$sc->nid] = $sc->parent;
+  }
+  
+  // split each take into 4 category-specific takes, dropping any records of the wrong language, and recalculating all the meta stuff, keep created only
+  $result = db_query("SELECT * from {osi_take} WHERE isnull(tid) ORDER BY rid");
+  while($take = db_fetch_object($result)) {
+    $user = db_fetch_object(db_query("SELECT uid,language FROM {users} WHERE uid = %d",$take->uid));
+    $langcode = empty($user->language) ? 'en' : $user->language;
+    $takes = array();
+    foreach($categories[$langcode] as $tid) {
+      $record = new stdClass();
+      $record->uid = $take->uid;
+      $record->created = $take->created;
+      $record->changed = 0;
+      $record->last_nid = 0;
+      $record->tid = $tid;
+      drupal_write_record('osi_take',$record);
+      $takes[$tid] = $record;
+    }
+    $answers = db_query("SELECT nid,changed FROM {osi_rid} WHERE rid = %d ORDER BY changed",$take->rid);
+    while ($a = db_fetch_object($answers)) {
+      $record = NULL;
+      if (isset($osi_standard[$a->nid])) {
+        $snid = $osi_standard[$a->nid];
+        $tid = $standard_category[$snid];
+        $record = isset($takes[$tid]) ? $takes[$tid] : NULL;
+      }
+      if (empty($record)) { 
+        print_r($a); 
+        echo('bad record'); 
+        db_query("DELETE FROM {osi_rid} WHERE rid = %d and nid = %d", $take->rid, $a->nid);
+      }
+      else {
+        // print_r($record); print_r($a); die();
+        db_query("UPDATE {osi_rid} SET rid = %d WHERE rid = %d and nid = %d", $record->rid, $take->rid, $a->nid);
+        $takes[$tid]->changed = $a->changed;
+        $takes[$tid]->last_nid = $snid;
+      }
+    }
+    foreach($takes as $record) {
+      drupal_write_record('osi_take', $record,array('rid'));
+    }
+    db_query("DELETE FROM {osi_take} WHERE rid = %d",$take->rid);
+    // die('test');
+  }
+}
