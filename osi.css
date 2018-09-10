@@ -97,3 +97,7 @@ div.show-hide .ui-icon {
   display: inline;
   margin-right: 1em;
 }
+
+table.osi-score-report tr.standard {
+  font-weight: bold;
+}
