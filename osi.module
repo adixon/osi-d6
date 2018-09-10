@@ -29,10 +29,12 @@ define('OSI_DEBUG',0);
 
 function _osi_categories($lang = NULL, $ctid = 0) {
   $categories = array(); 
-  $categories[] = array('en' => '46', 'fr' => '81', 'label'  => t('Community'));
-  $categories[] = array('en' => '47', 'fr' => '101', 'label' => t('Governance'));
-  $categories[] = array('en' => '48', 'fr' => '105', 'label' => t('Operations'));
-  $categories[] = array('en' => '49', 'fr' => '106', 'label' => t('Human Resources'));
+  $categories[] = array('en' => '4', 'fr' => '6', 'label'  => t('Governance, Policies and Human Resources'));
+  $categories[] = array('en' => '18', 'label'  => t('Environment & Climate (including external relations)'));
+  $categories[] = array('en' => '19', 'label'  => t('Service Delivery'));
+//  $categories[] = array('en' => '47', 'fr' => '101', 'label' => t('Governance'));
+//  $categories[] = array('en' => '48', 'fr' => '105', 'label' => t('Operations'));
+//  $categories[] = array('en' => '49', 'fr' => '106', 'label' => t('Human Resources'));
   if (!empty($lang)) {
     $return = array();
     foreach($categories as $category) {
@@ -133,42 +135,51 @@ function osi_menu() {
     'type' => MENU_CALLBACK, 
   );
   $items['user/%user/osi_report'] = array(
-    'title' => 'Results',
-    'page callback' => 'osi_report_combined',
+    'title' => 'Summary Results',
+    'ignored page callback' => 'osi_report_combined',
+    'page callback' => 'osi_report_table',
     'page arguments' => array(1,4,5),
-    'access arguments' => array('take osi question'),
+//    'access arguments' => array('take osi question'),
+    'access arguments' => array('administer osi configuration'), 
     'type' => MENU_LOCAL_TASK,
     'weight' => 4,
   );
+/*
   $items['user/%user/osi_report/combined'] = array(
     'title' => 'Combined',
     'page callback' => 'osi_report_combined',
     'page arguments' => array(1,4,5),
-    'access arguments' => array('take osi question'),
+    'ignore access arguments' => array('take osi question'), 
+    'access arguments' => array('administer osi configuration'),
     'type' => MENU_LOCAL_TASK,
   );
+*/
   $items['user/%user/osi_report/table'] = array(
     'title' => 'Table', 
     'page callback' => 'osi_report_table', 
     'page arguments' => array(1,4,5),
-    'access arguments' => array('take osi question'), 
-    'type' => MENU_LOCAL_TASK,
+//    'access arguments' => array('take osi question'), 
+    'access arguments' => array('administer osi configuration'), 
+    'type' => MENU_DEFAULT_LOCAL_TASK,
   );
+/*
   $items['user/%user/osi_report/chart'] = array(
     'title' => 'Chart', 
     'weight' => 10,
     'page callback' => 'osi_report_chart', 
     'page arguments' => array(1,4,5),
-    'access arguments' => array('take osi question'), 
+    'ignore access arguments' => array('take osi question'), 
+    'access arguments' => array('administer osi configuration'),
     'type' => MENU_LOCAL_TASK,
   );
+*/
   $items['user/%user/osi_list'] = array(
-    'title' => 'Indicators', 
+    'title' => 'Your Answers', 
     'page callback' => 'osi_list', 
     'page arguments' => array(1),
     'access arguments' => array('take osi question'), 
     'type' => MENU_LOCAL_TASK,
-    'weight' => 2,
+    'weight' => -2,
   );
   $items['user/%user/osi_list/all'] = array(
     'title' => 'All', 
@@ -197,7 +208,8 @@ function osi_menu() {
     'title' => 'Compare Assessments', 
     'page callback' => 'osi_compare',
     'page arguments' => array(1),
-    'access arguments' => array('take osi question'), 
+    'ignore access arguments' => array('take osi question'), 
+    'access arguments' => array('administer osi configuration'),
     'type' => MENU_LOCAL_TASK,
     'weight' => 2,
   );
@@ -205,24 +217,25 @@ function osi_menu() {
     'title' => 'Compare Assessments', 
     'page callback' => 'osi_compare', 
     'page arguments' => array(1,3,4),
-    'access arguments' => array('take osi question'), 
+    'ignore access arguments' => array('take osi question'), 
+    'access arguments' => array('administer osi configuration'),
     'type' => MENU_LOCAL_TASK,
     'weight' => 5,
   );
-  $items['osi_users/%'] = array(
+  $items['admin/reports/osi_users/%'] = array(
     'title' => 'Usage Report', 
-    'page callback' => 'osi_report_users', 
+    'page callback' => 'osi_report_users',  
     'page arguments' => array(1),
     'access arguments' => array('view osi user report'), 
     'type' => MENU_NORMAL_ITEM,
   );
-  $items['osi_report'] = array(
+  $items['admin/reports/osi_report'] = array(
     'title' => 'Aggregate Results', 
     'page callback' => 'osi_report_aggregate', 
     'access arguments' => array('view aggregate osi results'), 
     'type' => MENU_NORMAL_ITEM,
   );
-  $items['osi_report/'.OSI_LAST] = array(
+  $items['admin/reports/osi_report/'.OSI_LAST] = array(
     'title' => 'Last', 
     'page callback' => 'osi_report_aggregate', 
     'access arguments' => array('view aggregate osi results'), 
@@ -230,14 +243,14 @@ function osi_menu() {
     'page arguments' => array(1,2, FALSE),
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
-  $items['osi_report/%/percent'] = array(
+  $items['admin/reports/osi_report/%/percent'] = array(
     'title' => 'Aggregate Results', 
     'page callback' => 'osi_report_aggregate', 
     'access arguments' => array('view aggregate osi results'), 
     'page arguments' => array(2,2, FALSE, TRUE),
     'type' => MENU_NORMAL_ITEM,
   );
-  $items['osi_report/'.OSI_LAST_COMPLETE] = array(
+  $items['admin/reports/osi_report/'.OSI_LAST_COMPLETE] = array(
     'title' => 'Last Complete', 
     'page callback' => 'osi_report_aggregate', 
     'access arguments' => array('view aggregate osi results'), 
@@ -245,7 +258,7 @@ function osi_menu() {
     'page arguments' => array(1,2, FALSE),
     'type' => MENU_LOCAL_TASK,
   );
-  $items['osi_report/'.OSI_LAST_IF_COMPLETE] = array(
+  $items['admin/reports/osi_report/'.OSI_LAST_IF_COMPLETE] = array(
     'title' => 'Last If Complete', 
     'page callback' => 'osi_report_aggregate', 
     'access arguments' => array('view aggregate osi results'), 
@@ -253,14 +266,14 @@ function osi_menu() {
     'page arguments' => array(1,2,FALSE),
     'type' => MENU_LOCAL_TASK,
   );
-  $items['osi_report_details'] = array(
+  $items['admin/reports/osi_report_details'] = array(
     'title' => 'Detailed Aggregate Results', 
     'page callback' => 'osi_report_aggregate', 
     'access arguments' => array('view aggregate osi results'), 
     'page arguments' => array(1,2,TRUE),
     'type' => MENU_NORMAL_ITEM,
   );
-  $items['osi_report_details/'.OSI_LAST] = array(
+  $items['admin/reports/osi_report_details/'.OSI_LAST] = array(
     'title' => 'Last', 
     'page callback' => 'osi_report_aggregate', 
     'access arguments' => array('view aggregate osi results'), 
@@ -268,7 +281,7 @@ function osi_menu() {
     'page arguments' => array(1,2,TRUE),
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
-  $items['osi_report_details/'.OSI_LAST_COMPLETE] = array(
+  $items['admin/reports/osi_report_details/'.OSI_LAST_COMPLETE] = array(
     'title' => 'Last Complete', 
     'page callback' => 'osi_report_aggregate', 
     'access arguments' => array('view aggregate osi results'), 
@@ -276,7 +289,7 @@ function osi_menu() {
     'page arguments' => array(1,2,TRUE),
     'type' => MENU_LOCAL_TASK,
   );
-  $items['osi_report_details/'.OSI_LAST_IF_COMPLETE] = array(
+  $items['admin/reports/osi_report_details/'.OSI_LAST_IF_COMPLETE] = array(
     'title' => 'Last If Complete', 
     'page callback' => 'osi_report_aggregate', 
     'access arguments' => array('view aggregate osi results'), 
@@ -375,6 +388,7 @@ function osi_block($op = 'list', $delta = 0) {
       $blocks['category-status'] = array('info' => 'Category Status Block');
       $blocks['category-blocks'] = array('info' => 'Category Blocks');
       $blocks['category-resources'] = array('info' => 'Category Resources');
+      $blocks['standard-comments'] = array('info' => 'Standard Comments');
       $blocks[23] = array('info' => 'Assessment menu');
 
       return $blocks;
@@ -396,6 +410,16 @@ function osi_block($op = 'list', $delta = 0) {
           $content .= '</ul>';
           $block = array('title' => $block_title, 'content' => $content, 'weight' => '-101');
           return($block);
+        case 'standard-comments':
+          if ('node' == arg(0) && '' == arg(2)) {
+            $nid = arg(1);
+            $node = node_load($nid);
+            $block_title = '';
+            $content = comment_bonus_api_comment_render($node, $node->cid);
+            $block = array('title' => $block_title, 'content' => $content, 'weight' => '-101');
+            return($block);
+          }
+          return;
       }
 
       $path = drupal_get_path('module', 'osi');
@@ -432,7 +456,7 @@ function osi_block($op = 'list', $delta = 0) {
           $js = ($rid > 0) ? TRUE : FALSE;
         }            
       }
-      elseif ($delta == 'category-blocks') { // display the completion status of all four categories
+      elseif ($delta == 'category-blocks') { // display the completion status of all categories
         $icons = _osi_categories($lang);
         foreach($icons as $ctid => $icon) {
           $rid = 0;
@@ -474,7 +498,9 @@ function osi_block($op = 'list', $delta = 0) {
 function _osi_category_status($rid,$ctid) {
   $cat = taxonomy_get_term($ctid);
   list($results,$total) = osi_progress($rid,$ctid,FALSE);
-  $content = '<a href="/category/'.$ctid.'"><div class="osi-category-icon osi-category-icon-'.$ctid.'"></div><div class="osi-category-name">'.$cat->name.'</div></a>';
+  // $cat_path = url('node/'.osi_nid($ctid));
+  $cat_path = url('taxonomy/term/'.$ctid);
+  $content = '<a href="'.$cat_path.'"><div class="osi-category-icon osi-category-icon-'.$ctid.'"></div><div class="osi-category-name">'.$cat->name.'</div></a>';
   if ($total && $rid) {
     $result = sprintf('%d%%',floor(100*$results/$total));
     $content .= '<span class="progressBar" id="osi-status-'.$ctid.'">'.$result.'</span>';
@@ -515,7 +541,7 @@ function osi_user($op, &$edit, &$account, $category = NULL) {
         '#type' => 'user_profile_item',
         '#title' => theme('osi_options_title','Tabs','user/'.$account->uid),
         '#attributes' => array('class' => 'osi-tabs'),
-        '#value' => t('Click on any of the four categories below at any time.'),
+        '#value' => t('To begin or continue the self-assessment, click on one of the categories below.'),
         '#weight' => 5,
       );
 /*
@@ -527,7 +553,15 @@ function osi_user($op, &$edit, &$account, $category = NULL) {
         '#weight' => 1,
       );
 */
-      $plan_nid = ($langcode == 'fr' ? 1298 : 1297); 
+      $account->content['osi_options']['results'] =  array(
+        '#type' => 'user_profile_item',
+        '#title' => theme('osi_options_title','Review','user/'.$account->uid.'/osi_list'),
+        '#attributes' => array('class' => 'osi-list'),
+        '#value' => t('To review your answers so far, you can click on the "Your Answers" link above'),
+        '#weight' => 6,
+      );
+/*
+      $plan_nid = ($langcode == 'fr' ? 124 : 124); 
       $account->content['osi_options']['plan'] =  array(
         '#type' => 'user_profile_item',
         '#title' => theme('osi_options_title','Plan',"node/$plan_nid"),
@@ -535,7 +569,7 @@ function osi_user($op, &$edit, &$account, $category = NULL) {
         '#value' => t('Finished the assessment? See section on !plan',array('!plan' => l(t('Action Planning'),"node/$plan_nid"))),
         '#weight' => 6,
       );
-
+*/
       return;
   }  
 }
@@ -880,20 +914,13 @@ function osi_view(&$node, $teaser = FALSE, $page = FALSE) {
   $node->content['answer'] = array('#value' => '<a name="osi-'.$node->nid.'"></a>'.$answer_content);
   if (!$teaser) {
     unset($node->content['body']);
-    if ($page && $term->vid) { // this should not happen anymore
-      $breadcrumb[] = l(t('Home'), NULL);
-      $nid = osi_nid($term->tid);
-      $path = empty($nid) ? 'taxonomy/term/'.$term->tid : 'node/'.$nid;
-      $breadcrumb[] = l($term->name,$path);
-      drupal_set_breadcrumb($breadcrumb);
-      // get some information for a next/prev buttons
-      $sort = variable_get('osi_navigation_field','');
-      $sort = $sort ? $sort."_value" : '';
-      $order = $sort ? " ORDER BY $sort" : '';
-      $result = db_query($tmp = "SELECT n.nid, c.$sort FROM {node} n LEFT JOIN {term_node} t ON n.nid = t.nid LEFT JOIN {content_type_osi} c ON n.vid = c.vid WHERE n.type = 'osi' AND t.tid = %d ".$order,$term->tid);
-      $node->osi_vid = array();
-      while ($ind = db_fetch_object($result)) {
-        $node->osi_vid[$ind->nid] = $ind->$sort;
+    if ($page) {
+      if ($term->vid) { // this should not happen anymore
+        $breadcrumb[] = l(t('Home'), NULL);
+        $nid = osi_nid($term->tid);
+        $path = empty($nid) ? 'taxonomy/term/'.$term->tid : 'node/'.$nid;
+        $breadcrumb[] = l($term->name,$path);
+        drupal_set_breadcrumb($breadcrumb);
       }
     }
   }
@@ -928,7 +955,7 @@ function osi_render_answers_form(&$form_state, $node, $previous) {
 
   static $indct;
   $indct++;
-  if($indct == '1') $indct = 'a';
+  // if($indct == '1') $indct = 'a';
 
   $form = array('#attributes' => array('class' => 'osi-answers-form'));
   $nid = $node->nid;
@@ -947,7 +974,8 @@ function osi_render_answers_form(&$form_state, $node, $previous) {
   $body = _glossary_filter_process(filter_resolve_format($node->format), $node->body);
   $form['question'] = array(
     '#type' => 'markup', 
-    '#value' => '<h3 class="osi-question">Indicator</h3><div class="osi-indicator">'. $indct . '. &ldquo;'.trim($title) .'&rdquo;</div>', 
+    //'#value' => '<h3 class="osi-question">Indicator</h3><div class="osi-indicator">'. $indct . '. &ldquo;'.trim($title) .'&rdquo;</div>', 
+    '#value' => '<div class="osi-indicator">'. trim($title) .'</div>', 
   );
   $form['hint'] = array(
     '#type' => 'markup', 
@@ -1013,6 +1041,7 @@ function osi_ajax_update($nid = 0, $result = 0) {
   $rid = current(osi_rid($tid));
   $nid = (integer) $nid;
   $result = (integer) $result;
+  // watchdog('osi_debug','ajax update for %tid - %rid - %nid',array('%tid' => $tid, '%rid' => $rid, '%nid' => $nid));
   if ($nid) {
     $tnid = db_result(db_query("SELECT tnid FROM {node} WHERE nid = %d",$nid));
     $tnid = $tnid ? $tnid : $nid;
@@ -1141,9 +1170,10 @@ function osi_scores($rids, $filter_tid = 0) {
   $standard_vid = variable_get('osi_standard_vid',0);
   $cats = taxonomy_get_tree($standard_vid,$filter_tid);
   foreach ($cats as $cat) { // a tree of categories and subcategories
-    if ($cat->language != $langcode) { 
+    if (!empty($cat->langcode) && $cat->language != $langcode) { 
       continue; 
     } // filter out terms of the wrong language!
+    /*
     $parent = current($cat->parents);
     if (!$parent) {
       $scores[$cat->tid] = array();
@@ -1156,6 +1186,11 @@ function osi_scores($rids, $filter_tid = 0) {
         }
       }
     }
+    */
+    $scores[$cat->tid] = array();
+    foreach($rids as $rid => $tid) {
+      $scores[$cat->tid][$rid] = array();
+    }
   }
   if ($filter_tid) { // filter via nat to the standards in this tid
     $terms = osi_standard_terms($filter_tid);
@@ -1163,9 +1198,10 @@ function osi_scores($rids, $filter_tid = 0) {
   else { // get them all
     $terms = taxonomy_get_tree($vid);
   }
+  // print_r($terms); die();
   /* now actually calculate the users' scores */
   foreach ($terms as $term) {
-    if ($term->language != $langcode) {
+    if (!empty($term->language) && $$term->language != $langcode) {
       continue; // filter out terms of the wrong language!
     }
     $valid = osi_standard_data($term);
@@ -1173,19 +1209,20 @@ function osi_scores($rids, $filter_tid = 0) {
       if ($term->cat->tid == $category_tid) {
         if ($valid) {
           if (empty($score_cached[$rid])) {
-            $score_uncached[$rid][$term->subcat->tid][$term->tid] = $score = osi_standard_score($term->tid,$rid);
+            $score_uncached[$rid][$term->cat->tid][$term->tid] = $score = osi_standard_score($term->tid,$rid);
           }
           else {
-            $score = $score_cached[$rid][$term->subcat->tid][$term->tid];
+            $score = $score_cached[$rid][$term->cat->tid][$term->tid];
           }
-          $scores[$term->cat->tid][$term->subcat->tid][$rid][$term->tid] = $score;
+          $scores[$term->cat->tid][$rid][$term->tid] = $score;
         }
         else {
-          unset($scores[$term->cat->tid][$term->subcat->tid][$rid][$term->tid]);
+          unset($scores[$term->cat->tid][$rid][$term->tid]);
         }
       }
     }
   }
+  // print_r($score_uncached); print_r($scores); die();
   // now cache any uncached ones
   foreach($score_uncached as $rid => $data) {
     $tid = $filter_tid ? $filter_tid : $rids[$rid];
@@ -1269,8 +1306,8 @@ function osi_scores_aggregate($style, $standard_tid, $filter_users, $details) {
       } 
       break;
   }
-  // print_r($rids);
-  // die("count: ".count($rids));
+  //print_r($rids);
+  //die("count: ".count($rids));
   // $rids = array_values($rids);
   foreach(array_keys($rids) as $tid) {
     $rids[$tid] = array_values($rids[$tid]);
@@ -1284,9 +1321,9 @@ function osi_scores_aggregate($style, $standard_tid, $filter_users, $details) {
   $standard_vid = variable_get('osi_standard_vid',0);
   $cats = taxonomy_get_tree($standard_vid,$standard_tid);
   foreach ($cats as $cat) {
-    if ($cat->language != $langcode) { 
+    if (!empty($cat->language) && $cat->language != $langcode) { 
       continue; 
-    } // filter out terms of the wrong language!
+    } // filter out terms of the wrong language, if set
     $parent = reset($cat->parents);
     if ($parent) {
       $scores[$parent][$cat->tid] = array();
@@ -1304,7 +1341,7 @@ function osi_scores_aggregate($style, $standard_tid, $filter_users, $details) {
   }
   /* now actually calculate the aggregate users' scores */
   foreach ($terms as $term) {
-    if ($term->language != $langcode) {
+    if (!empty($term->language) && $term->language != $langcode) {
       continue; // filter out terms of the wrong language!
     }
     $valid = osi_standard_data($term);
@@ -1360,7 +1397,7 @@ function osi_list($account = NULL, $filter_string = '') {
     drupal_access_denied();
     exit;
   }
-
+  drupal_set_title('');
   // convert filter string to number
   $filters = array('unanswered' => 0, 'answered' => 1, 'all' => -1);
   $f = check_plain($filter_string);
@@ -1375,13 +1412,7 @@ function osi_list($account = NULL, $filter_string = '') {
   $cvid = variable_get('osi_standard_vid',0);
   $cterms = taxonomy_get_tree($cvid);
   foreach($cterms as $term) {
-    $parent = reset($term->parents);
-    if ($parent) {
-      $indicators[$parent][$term->tid] = array();
-    }
-    else {
-      $indicators[$term->tid] = array();
-    }
+    $indicators[$term->tid] = array();
   }
   $vid = variable_get('osi_vid', 0);
   $terms = taxonomy_get_tree($vid);
@@ -1391,35 +1422,31 @@ function osi_list($account = NULL, $filter_string = '') {
     if ($term->node) {
       $rid = $rids[$term->cat->tid];
       osi_standard_indicators($term,$rid,$filter);
+      // print_r($term); die();
+      // print_r($rids); die();
       if (count($term->indicators) > 0) {
-        $indicators[$term->cat->tid][$term->subcat->tid][$term->tid] = $term->indicators;
+        $indicators[$term->cat->tid][$term->tid] = $term->indicators;
       }
     }
   }
   $output = '<dl class="osi-user osi-uncollapsed">';
   $header = NULL; // $filter ? array('Indicator','Response','Last Change') : array('Indicator');
-  foreach($indicators as $cat_tid => $subcats) {
+  foreach($indicators as $cat_tid => $standards) {
     $cat = taxonomy_get_term($cat_tid);
     $incst = 1;
     $incat = 1;
     $output .= '<dt><a class="osi-collapsible osi-category">'.$cat->name.'</a></dt><dd><dl class="osi-uncollapsed">';
-    foreach($subcats as $subcat_tid => $standards) {
-      $subcat = taxonomy_get_term($subcat_tid);
-      $output .= '<dt><a class="osi-collapsible osi-subcategory">'.($incat++).'. '.$subcat->name.'</a></dt><dd class="osi-subcategory"><dl class="osi-uncollapsed">';
-      foreach($standards as $standard_tid => $indicators) {
-        $standard = taxonomy_get_term($standard_tid);
-        $output .= '<dt><a class="osi-collapsible osi-standard">'.($incst++).'. '.$standard->name.'</a></dt><dd class="osi-standard">';
-        $rows = array();
-        $indct = 'a';
-        foreach($indicators as $nid => $indicator) { 
-          $rows[] = array('class' => 'osi-indicator-row','data' => theme('osi_indicator_row',$indct,$indicator,$filter));
-          $indct++;
-        }
-        
-        $output .= theme('osi_table', $header, $rows, 'osi-indicators-report-'.$filter);
-        $output .= '</dd>';
+    foreach($standards as $standard_tid => $indicators) {
+      $standard = taxonomy_get_term($standard_tid);
+      $output .= '<dt><a class="osi-collapsible osi-standard">'.($incst++).'. '.$standard->name.'</a></dt><dd class="osi-standard">';
+      $rows = array();
+      $indct = 'a';
+      foreach($indicators as $nid => $indicator) { 
+        $rows[] = array('class' => 'osi-indicator-row','data' => theme('osi_indicator_row',$indct,$indicator,$filter));
+        $indct++;
       }
-      $output .= '</dl></dd>';
+      $output .= theme('osi_table', $header, $rows, 'osi-indicators-report-'.$filter);
+      $output .= '</dd>';
     }
     $output .= '</dl></dd>';
   }
@@ -1653,9 +1680,10 @@ function osi_progress($rid, $tid = 0, $formatted = 1) {
 
   global $user;
   if (empty($tid)) {
-    die('invalid call to osi_progress');
+    //print_r(debug_backtrace()); 
+    //die('invalid call to osi_progress');
   }
-  if ($tid) { // filter by category
+  else { // if ($tid) { // filter by category
     $cterm = taxonomy_get_term($tid); 
     $terms = osi_standard_terms($tid); 
     $arg = implode(',',array_keys($terms));
@@ -1725,6 +1753,7 @@ function osi_report_table($account = NULL, $filter_tid = 0, $rid_list = '', $pag
     $rids = array_flip(osi_rid(NULL,$uid));
   }
   $scores = osi_scores($rids, $filter_tid);
+  // print_r($scores); die('test');
   $path = drupal_get_path('module', 'osi');
   drupal_add_css($path .'/osi.css');
   drupal_add_js($path. '/osi.js','module');
@@ -1750,17 +1779,17 @@ function osi_report_table($account = NULL, $filter_tid = 0, $rid_list = '', $pag
   $output = $page ? ($filter_tid ? '' : '<div id="osi-results-intro">'.variable_get('osi_results_intro', '').'</div>') : ''; 
   $output .= '<dl class="osi-user osi-uncollapsed">';
   // echo '<pre>';print_r($scores); echo '</pre>';die();
-  foreach($scores as $cat_tid => $cat_scores) {
+  foreach($scores as $cat_tid => $assessment_scores) {
     $cat = taxonomy_get_term($cat_tid);
     $link = l($cat->name,'user/'.$uid.'/osi_report/'.$cat->tid, array('attributes' => array('class' => 'osi-collapsible')));
     $output .= '<dt>'.$link.'</dt><dd><dl class="osi-uncollapsed">';
     $stid = '';
     $stct = '';
-    foreach($cat_scores as $subcat_tid => $assessment_scores) {
-      $stid++;
-      $subcat = taxonomy_get_term($subcat_tid);
-      $link = l($subcat->name,'user/'.$uid.'/osi_report/'.$subcat->tid, array('attributes' => array('class' => 'osi-collapsible')));
-      $output .= '<dt>'.$stid.' '.$link.'</dt><dd>';
+//    foreach($cat_scores as $subcat_tid => $assessment_scores) {
+//      $stid++;
+//      $subcat = taxonomy_get_term($subcat_tid);
+//      $link = l($subcat->name,'user/'.$uid.'/osi_report/'.$subcat->tid, array('attributes' => array('class' => 'osi-collapsible')));
+//      $output .= '<dt>'.$stid.' '.$link.'</dt><dd>';
       $rows = array();
       $i = 0;
       $rids = array_keys($assessment_scores);
@@ -1784,7 +1813,7 @@ function osi_report_table($account = NULL, $filter_tid = 0, $rid_list = '', $pag
       }
       $output .= theme('osi_table', $header, $rows, 'osi-score-report');
       $output .= '</dd>';
-    }
+    // }
     $output .= '</dl></dd>';
   }
   $output .= '</dl>';
@@ -2057,7 +2086,7 @@ function theme_osi_indicator_row($indct,$indicator,$filter) {
   return $row;
 }
 
-function theme_osi_aggregate_score_row($score, $standard, $style, $percent) {
+function x_theme_osi_aggregate_score_row($score, $standard, $style, $percent) {
   $keys = array(-2 ,-1,0, 1,2,3);
   if ($style) { // only the 0 style needs Incomplete column
     array_shift($keys);
@@ -2073,20 +2102,43 @@ function theme_osi_aggregate_score_row($score, $standard, $style, $percent) {
   return $row;
 }
 
+function theme_osi_aggregate_score_row($score, $standard, $style, $percent = FALSE) {
+  if($style == 'percent') $style = '0';
+  if($percent) $lab = 'Avg. # Indicators Answered';
+  else $lab = 'Incomplete';
+  $labels = array(-2 => t($lab), -1 => t('N/A'), 0 => t('Requires Attention'), 1 => t('Some Progress'), 2 => t('Well On Your Way'), 3 => t('Affirming Practice'));
+  if ($style) { // only the 0 style needs Incomplete column
+    array_shift($labels);
+  }
+  if (is_null($score)) {
+    $row = array_values($labels);
+    array_unshift($row,t('Standard'));
+    return $row;
+  }
+  $name = l($standard->title, 'node/'.$standard->nid);
+  $row = array($name);
+  foreach($labels as $key => $label) {
+    $row[] = isset($score[$key]) ? $score[$key] : 0;
+  }
+  // print_r($labels);print_r($score); print_r($row); die();
+  return $row;
+}
+
 function theme_osi_aggregate_score_row_details($score, $standard, $style, $total = FALSE) {
   static $answers = NULL;
+  $letters = range('a','z');
   if (!$answers) {
     $answers = _osi_get_answers(TRUE);
     $answers[0] = t('Unanswered');
     ksort($answers);
   }
   if (is_null($score)) { // header row
-    return array(-20 => 'Standard/Indicator') + $answers;
+    return array(-20 => 'Benchmark/Indicator') + $answers;
   }
   if ($total) {
     
   }
-  $name = is_object($standard) ? $standard->title : $standard;
+  $name = is_object($standard) ? ($standard->field_id[0]['value'] . '. '. $standard->title) : $standard;
   $rows = array(); // 
   $rows[] = array('class' => 'standard','data' => array(array('data' => $name, 'colspan' => (1+count($answers))))); // a row with just the indicator title in it
   foreach($score as $nid => $answer_counts) { // additional rows for each indicator
@@ -2096,6 +2148,8 @@ function theme_osi_aggregate_score_row_details($score, $standard, $style, $total
       continue;
     } 
     $title = str_replace(array('[no-glossary]','[/no-glossary]'),'',($indicator->indicator ? $indicator->indicator : $indicator->title));
+    $letter = $letters[-1 + (int) $indicator->field_number[0]['value']];
+    $title = $letter . '. '.$title;
     $row['title'] = array('data' => l($title,'node/'.$indicator->nid),'class' => 'title');
     foreach(array_keys($answers) as $key) {
       $row[] = array('data' => (integer) $answer_counts[$key], 'class' => 'result');
@@ -2115,11 +2169,11 @@ function osi_standard_data(&$term) {
     return FALSE;
   }
   $svid = variable_get('osi_standard_vid',0);
-  $term->subcat = _osi_term($term->node,$svid);
-  $parents = taxonomy_get_parents($term->subcat->tid);
+  $term->cat = _osi_term($term->node,$svid);
+  /* $parents = taxonomy_get_parents($term->subcat->tid);
   if (count($parents)) {
     $term->cat = current($parents);
-  }
+  } */
   return TRUE;
 }
 
@@ -2128,8 +2182,10 @@ function osi_standard_data(&$term) {
 function osi_standard_indicators(&$standard, $rid, $answered = -1) { 
   // get the user scores and possible osi metadata (from osi_node) for each indicator tagged with this term
   $where = ($answered < 0) ? '' : ' AND' .($answered ? ' NOT':'').' ISNULL(osi_rid.result)';
-  $result = db_query('SELECT n.nid, n.title, osi_node.indicator, osi_rid.result, osi_rid.created, osi_rid.changed FROM {node} n INNER JOIN {term_node} tn on n.vid = tn.vid AND tn.tid = %d LEFT JOIN {osi_rid} osi_rid ON osi_rid.nid = n.tnid AND osi_rid.rid = %d LEFT JOIN {osi_node} osi_node ON n.nid = osi_node.nid WHERE n.type = "osi" AND n.status = 1'.$where, $standard->tid, $rid);
+  // $query = 'SELECT n.nid, n.title, osi_node.indicator, osi_rid.result, osi_rid.created, osi_rid.changed FROM {node} n INNER JOIN {term_node} tn on n.vid = tn.vid AND tn.tid = %d LEFT JOIN {osi_rid} osi_rid ON osi_rid.nid = n.tnid AND osi_rid.rid = %d LEFT JOIN {osi_node} osi_node ON n.nid = osi_node.nid WHERE n.type = "osi" AND n.status = 1'.$where, $standard->tid, $rid);
+  $result = db_query('SELECT n.nid, n.title, osi_node.indicator, osi_rid.result, osi_rid.created, osi_rid.changed FROM {node} n INNER JOIN {term_node} tn on n.vid = tn.vid AND tn.tid = %d LEFT JOIN {osi_rid} osi_rid ON osi_rid.nid = n.nid AND osi_rid.rid = %d LEFT JOIN {osi_node} osi_node ON n.nid = osi_node.nid WHERE n.type = "osi" AND n.status = 1'.$where, $standard->tid, $rid);
   while ($indicator = db_fetch_object($result)) { 
+    // print_r($indicator); die();
     $standard->indicators[$indicator->nid] = $indicator;
   }
 }
@@ -2144,6 +2200,7 @@ function osi_standard_indicator_data($tid) {
     // set default scoring implication for this indicator if necessary
     $indicator->standard = $indicator->standard ? $indicator->standard : OSI_DEFAULT_STANDARD;
     $indicator->exceed = $indicator->exceed ? $indicator->exceed : OSI_DEFAULT_EXCEED;
+    $indicator->tnid = $indicator->tnid ? $indicator->tnid : $indicator->nid;
     $indicators[$indicator->tnid] = $indicator;
   }
   return $indicators;
@@ -2160,6 +2217,7 @@ function osi_standard_indicator_data($tid) {
 
 function osi_standard_score($tid, $rid) { 
   $indicators = osi_standard_indicator_data($tid);
+  // print_r($indicators); die('tid'.$tid);
   // most of the work is in this private method
   return _osi_standard_score($tid,$rid,$indicators);
 }
@@ -2380,6 +2438,8 @@ function osi_rid($tid = NULL, $uid = NULL, $new = FALSE) {
     $user->osi_rid = array();
     $user->osi_rids = array();
   }
+  // print_r($tids); die('test');
+  // print_r($categories); 
   $return = array();
   foreach($tids as $tid) {
     // print_r(debug_backtrace()); print_r($tids); print_r($categories); print_r($user); die();
@@ -2450,7 +2510,8 @@ function osi_node_category_tid($node) {
         return $category->tid;
       }
     case $stype:
-      return db_result(db_query("SELECT h.parent FROM {node} standard INNER JOIN {term_node} t ON (standard.vid = t.vid) INNER JOIN {term_hierarchy} h ON (t.tid = h.tid) WHERE standard.nid = %d", $node->nid));
+      return current(array_keys($node->taxonomy));
+      // return db_result(db_query("SELECT h.parent FROM {node} standard INNER JOIN {term_node} t ON (standard.vid = t.vid) INNER JOIN {term_hierarchy} h ON (t.tid = h.tid) WHERE standard.nid = %d", $node->nid));
     case 'osi':
       return osi_category($node->nid);
   }
@@ -2461,7 +2522,8 @@ function osi_node_category_tid($node) {
 
 function osi_category($nid) {
   $snid = db_result(db_query("SELECT standard.nid as standardnid FROM {node} osi INNER JOIN {term_node} t ON (osi.vid = t.vid) INNER JOIN {nat} standard ON (t.tid = standard.tid AND standard.vid = 1) WHERE osi.nid = '%d'",$nid));
-  return db_result(db_query("SELECT h.parent FROM {node} standard INNER JOIN {term_node} t ON (standard.vid = t.vid) INNER JOIN {term_hierarchy} h ON (t.tid = h.tid) WHERE standard.nid = %d", $snid));
+  return db_result(db_query("SELECT t.tid FROM {node} standard INNER JOIN {term_node} t ON (standard.vid = t.vid) WHERE standard.nid = %d", $snid));
+  // return db_result(db_query("SELECT h.parent FROM {node} standard INNER JOIN {term_node} t ON (standard.vid = t.vid) INNER JOIN {term_hierarchy} h ON (t.tid = h.tid) WHERE standard.nid = %d", $snid));
 }
  
 /* utility functions for navigation, not required for the self-assessment functionality 
@@ -2483,7 +2545,8 @@ function osi_nodeapi(&$node, $op, $a3, $a4) {
   $ctype = variable_get('osi_category_type',NULL);
   $cvid = variable_get('osi_category_vid',0);
   if ($op == 'view' && in_array($node->type,array($stype,$ctype)) && $a4) { // a4 means 'page' when op == 'view'
-    $category_tid = osi_node_category_tid($node);
+    $category_tid = osi_node_category_tid($node); 
+    // print_r($node); print_r($category_tid); die('test');
     // save the last view value
     $rid = current(osi_rid($category_tid)); 
     db_query('UPDATE {osi_take} SET last_nid = %d WHERE rid = %d',$node->nid,$rid);
@@ -2515,6 +2578,7 @@ function osi_nodeapi(&$node, $op, $a3, $a4) {
           break;
         }
         $score = osi_standard_score($standard->tid, $rid); // load the current user's score data
+        // print_r($standard); die("rid: $rid");
         $score = theme_osi_score_row($score,$standard->node); // convert it into a simple array
         $status_string = $score['!last_change'] ? 'Your status: !progress answered, last changed on !last_change.' : 'Your status: !progress answered.';
         $node->content['osi_status'] = array('#title' => t('Your Status'), '#value' => '<div class="osi-score">'.t($status_string,$score).'</div>');
@@ -2536,10 +2600,26 @@ function osi_nodeapi(&$node, $op, $a3, $a4) {
           $sections = taxonomy_get_tree($svid);
           for ($i = 0; $i < count($sections) - 1; $i++) {
             if ($sections[$i]->tid == $section_tid) {
-              $node->osi_next = $sections[$i + 1];
+              $node->osi_next_section = $sections[$i + 1];
             }
           }
-        } 
+        }
+        // get some information for next/prev buttons
+        $sort_field = variable_get('osi_navigation_field','');
+        $my_sort_value = $node->{$sort_field}[0]['value'];
+        // print_r($sort); print_r($node); die();
+        // print_r($my_sort_value); print_r($node->$sort); die();
+        $sql_sort_field = $sort_field.'_value';
+        $order = $sort_field ? ' ORDER BY '.$sql_sort_field : '';
+        $result = db_query("SELECT n.title, n.nid, s.$sql_sort_field FROM {node} n LEFT JOIN {term_node} t ON n.nid = t.nid LEFT JOIN {content_type_standard} s ON n.vid = s.vid WHERE s.$sql_sort_field >= %d AND n.nid != %d AND n.type = 'standard' AND t.tid = %d $order LIMIT 1", $my_sort_value, $node->nid, $section_tid);
+        if ($ind = db_fetch_object($result)) {
+          $node->osi_next_standard = $ind;
+        }
+        $result = db_query("SELECT n.title, n.nid, s.$sql_sort_field FROM {node} n LEFT JOIN {term_node} t ON n.nid = t.nid LEFT JOIN {content_type_standard} s ON n.vid = s.vid WHERE s.$sql_sort_field <= %d AND n.nid != %d AND n.type = 'standard' AND t.tid = %d $order LIMIT 1", $my_sort_value, $node->nid, $section_tid);
+        if ($ind = db_fetch_object($result)) {
+          $node->osi_prev_standard = $ind;
+        }
+        break;
     } // end switch
     if ($section_tid) {
       $category_tid = current(array_keys(taxonomy_get_parents($section_tid)));
