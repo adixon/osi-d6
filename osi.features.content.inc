@@ -194,11 +194,11 @@ function osi_content_default_fields() {
       ),
       'teaser' => array(
         'format' => 'default',
-        'exclude' => 0,
+        'exclude' => 1,
       ),
       'full' => array(
         'format' => 'default',
-        'exclude' => 0,
+        'exclude' => 1,
       ),
       '5' => array(
         'format' => 'default',
@@ -249,7 +249,7 @@ function osi_content_default_fields() {
     'field_name' => 'field_mandatory',
     'type_name' => 'osi',
     'display_settings' => array(
-      'weight' => '2',
+      'weight' => '6',
       'parent' => '',
       'label' => array(
         'format' => 'hidden',
@@ -286,6 +286,8 @@ function osi_content_default_fields() {
     'allowed_values' => '',
     'allowed_values_php' => '',
     'widget' => array(
+      'rows' => '2',
+      'size' => 60,
       'default_value' => array(
         '0' => array(
           'value' => '',
@@ -293,8 +295,6 @@ function osi_content_default_fields() {
         ),
       ),
       'default_value_php' => NULL,
-      'rows' => '2',
-      'size' => 60,
       'label' => 'Mandatory',
       'weight' => '6',
       'description' => 'This is an internal notes field only and has no visibility or function for the end user.',
@@ -308,18 +308,18 @@ function osi_content_default_fields() {
     'field_name' => 'field_number',
     'type_name' => 'osi',
     'display_settings' => array(
-      'weight' => '-2',
+      'weight' => '3',
       'parent' => '',
       'label' => array(
         'format' => 'hidden',
       ),
       'teaser' => array(
         'format' => 'default',
-        'exclude' => 0,
+        'exclude' => 1,
       ),
       'full' => array(
         'format' => 'default',
-        'exclude' => 0,
+        'exclude' => 1,
       ),
       '2' => array(
         'format' => 'default',
