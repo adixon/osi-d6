@@ -29,6 +29,9 @@ if (Drupal.jsEnabled) {
         $('#osi-changed-'+nid).html("<em>"+data+"</em>");
       });      
       $('#osi-render-answers-form-'+nid).animate({'backgroundColor': '#FF9'},'slow');
+      if (result == 4) {
+        alert('Please post a comment describing the innovation');
+      }
     }); 
     /* user report and list page functions */
     $('dl.osi-collapsed dd').hide();

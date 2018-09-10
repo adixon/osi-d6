@@ -6,6 +6,65 @@
 function osi_content_default_fields() {
   $fields = array();
 
+  // Exported field: field_number
+  $fields['category-field_number'] = array(
+    'field_name' => 'field_number',
+    'type_name' => 'category',
+    'display_settings' => array(
+      'weight' => '3',
+      'parent' => '',
+      'label' => array(
+        'format' => 'hidden',
+      ),
+      'teaser' => array(
+        'format' => 'default',
+        'exclude' => 1,
+      ),
+      'full' => array(
+        'format' => 'default',
+        'exclude' => 1,
+      ),
+      '2' => array(
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+      '3' => array(
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+      '4' => array(
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+    ),
+    'widget_active' => '1',
+    'type' => 'number_integer',
+    'required' => '1',
+    'multiple' => '0',
+    'module' => 'number',
+    'active' => '1',
+    'prefix' => '',
+    'suffix' => '',
+    'min' => '1',
+    'max' => '20',
+    'allowed_values' => '',
+    'allowed_values_php' => '',
+    'widget' => array(
+      'default_value' => array(
+        '0' => array(
+          'value' => '',
+          '_error_element' => 'default_value_widget][field_number][0][value',
+        ),
+      ),
+      'default_value_php' => NULL,
+      'label' => 'Number',
+      'weight' => '32',
+      'description' => 'Enter the number of the module.',
+      'type' => 'number',
+      'module' => 'number',
+    ),
+  );
+
   // Exported field: field_video
   $fields['category-field_video'] = array(
     'field_name' => 'field_video',
@@ -336,7 +395,7 @@ function osi_content_default_fields() {
     ),
     'widget_active' => '1',
     'type' => 'number_integer',
-    'required' => '0',
+    'required' => '1',
     'multiple' => '0',
     'module' => 'number',
     'active' => '1',
@@ -487,12 +546,77 @@ function osi_content_default_fields() {
     ),
   );
 
+  // Exported field: field_resource_nodes
+  $fields['standard-field_resource_nodes'] = array(
+    'field_name' => 'field_resource_nodes',
+    'type_name' => 'standard',
+    'display_settings' => array(
+      'weight' => '2',
+      'parent' => '',
+      'label' => array(
+        'format' => 'above',
+      ),
+      'teaser' => array(
+        'format' => 'default',
+        'exclude' => 1,
+      ),
+      'full' => array(
+        'format' => 'default',
+        'exclude' => 1,
+      ),
+      '4' => array(
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+      '2' => array(
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+      '3' => array(
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+    ),
+    'widget_active' => '1',
+    'type' => 'nodereference',
+    'required' => '0',
+    'multiple' => '1',
+    'module' => 'nodereference',
+    'active' => '1',
+    'referenceable_types' => array(
+      'resource' => 'resource',
+      'category' => 0,
+      'page' => 0,
+      'osi' => 0,
+      'standard' => 0,
+      'story' => 0,
+    ),
+    'advanced_view' => '--',
+    'advanced_view_args' => '',
+    'widget' => array(
+      'autocomplete_match' => 'contains',
+      'size' => '60',
+      'default_value' => array(
+        '0' => array(
+          'nid' => NULL,
+          '_error_element' => 'default_value_widget][field_resource_nodes][0][nid][nid',
+        ),
+      ),
+      'default_value_php' => NULL,
+      'label' => 'Resources',
+      'weight' => '2',
+      'description' => '',
+      'type' => 'nodereference_autocomplete',
+      'module' => 'nodereference',
+    ),
+  );
+
   // Exported field: field_resources
   $fields['standard-field_resources'] = array(
     'field_name' => 'field_resources',
     'type_name' => 'standard',
     'display_settings' => array(
-      'weight' => '2',
+      'weight' => '1',
       'parent' => '',
       'label' => array(
         'format' => 'above',
@@ -533,17 +657,18 @@ function osi_content_default_fields() {
     'allowed_values' => '',
     'allowed_values_php' => '',
     'widget' => array(
-      'rows' => '20',
+      'rows' => '5',
       'size' => 60,
       'default_value' => array(
         '0' => array(
           'value' => '',
+          'format' => '1',
           '_error_element' => 'default_value_widget][field_resources][0][value',
         ),
       ),
       'default_value_php' => NULL,
       'label' => ' Resources, Tools and Sample Policies for this Standard ',
-      'weight' => '2',
+      'weight' => '1',
       'description' => 'Resources related to this standard - text description.',
       'type' => 'text_textarea',
       'module' => 'text',
@@ -559,6 +684,7 @@ function osi_content_default_fields() {
   t('Legal Requirements');
   t('Mandatory');
   t('Number');
+  t('Resources');
   t('Video Image');
 
   return $fields;

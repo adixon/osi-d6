@@ -29,23 +29,25 @@ define('OSI_DEBUG',0);
 
 function _osi_categories($lang = NULL, $ctid = 0) {
   $categories = array(); 
-  $categories[] = array('en' => '4', 'fr' => '6', 'label'  => t('Governance, Policies and Human Resources'));
-  $categories[] = array('en' => '18', 'label'  => t('Environment & Climate (including external relations)'));
-  $categories[] = array('en' => '19', 'label'  => t('Service Delivery'));
+  $categories[] = array('en' => '1', 'fr' => '1', 'label'  => t('Governance & Strategic Leadership Module'));
+  $categories[] = array('en' => '14', 'fr' => '14', 'label'  => t('Human Resources Module'));
+  $categories[] = array('en' => '25', 'label'  => t('Operations Resources Module'));
+  $categories[] = array('en' => '26', 'label'  => t('Program/Service Management Module'));
+  $categories[] = array('en' => '27', 'label'  => t('PHA Engagement Module'));
 //  $categories[] = array('en' => '47', 'fr' => '101', 'label' => t('Governance'));
 //  $categories[] = array('en' => '48', 'fr' => '105', 'label' => t('Operations'));
 //  $categories[] = array('en' => '49', 'fr' => '106', 'label' => t('Human Resources'));
-  if (!empty($lang)) {
-    $return = array();
-    foreach($categories as $category) {
-      if ($ctid == $category[$lang]) {
-        return array($ctid => $category['label']);
-      }
-      $return[$category[$lang]] = $category['label'];
-    }
-    return $return;
+  if (empty($lang)) {
+    $lang = 'en';
   }
-  return $categories;
+  $return = array();
+  foreach($categories as $category) {
+    if ($ctid == $category[$lang]) {
+      return array($ctid => $category['label']);
+    }
+    $return[$category[$lang]] = $category['label'];
+  }
+  return $return;
 }
 
 /**
@@ -404,7 +406,27 @@ function osi_theme() {
     'osi_answer_help' => array('arguments' => array('help' => array())),
     'osi_options_title' => array('arguments' => array('text' => '', 'path' => '')),
     'osi_compare_form' => array('arguments' => array('form' => NULL)),
+    'osi_improvements' => array('arguments' => array('nodes' => NULL)),
+    'osi_innovations' => array('arguments' => array('nodes' => NULL)),
   );
+}
+
+/**
+ * Get current category
+ */
+function osi_get_current_category() {
+  if ('node' == arg(0) && is_numeric(arg(1)) && !arg(2)) {
+    $node = node_build_content(node_load(arg(1)),FALSE,TRUE);
+    if (isset($node->osi_navigation)) {
+      $ctid = $node->osi_navigation['category_tid'];
+    }
+  }
+  elseif (arg(0) == 'user' && in_array(arg(2),array('osi_list','osi_report'))) {
+    if (arg(4) && is_numeric(arg(4))) {
+      $ctid = arg(4);
+    }
+  }
+  return $ctid;
 }
 
 /**
@@ -424,6 +446,7 @@ function osi_block($op = 'list', $delta = 0) {
       $blocks['category-status'] = array('info' => 'Category Status Block');
       $blocks['category-blocks'] = array('info' => 'Category Blocks');
       $blocks['category-resources'] = array('info' => 'Category Resources');
+      $blocks['category-report'] = array('info' => 'Category Report');
       $blocks['standard-comments'] = array('info' => 'Standard Comments');
       $blocks[23] = array('info' => 'Assessment menu');
 
@@ -465,22 +488,9 @@ function osi_block($op = 'list', $delta = 0) {
       $title = $content = '';
       $weight='-10';
       if ($delta == 'category-status') { // a single category status block, calculate the current category
-        while(list($i,$v) = each($user->roles)) { if($v == 'participant') $p = true; }
-        if(!$p) return;
-        if ('node' == arg(0) && is_numeric(arg(1)) && !arg(2)) {
-          $node = node_build_content(node_load(arg(1)),FALSE,TRUE);
-          if (isset($node->osi_navigation)) {
-            $ctid = $node->osi_navigation['category_tid'];
-          }
+        if (!$ctid = osi_get_current_category())  {
+          return;
         }
-        elseif (arg(0) == 'user' && in_array(arg(2),array('osi_list','osi_report'))) {
-          if (arg(4) && is_numeric(arg(4))) {
-            $ctid = arg(4);
-          }
-        }
-        if (!$ctid)  return;
-	// $args = explode('/',$_SERVER['REQUEST_URI']);
-	// if($args[1] == 'category' && $ctid != $args[2]) return;
         $icons = _osi_categories($lang,$ctid);
 
         if ($user->uid) {
@@ -490,8 +500,48 @@ function osi_block($op = 'list', $delta = 0) {
         if (1 == count($icons) && isset($icons[$ctid])) { // sanity check, should emit an error otherwise
           $content = _osi_category_status($rid,$ctid,$base_path.'/images/'.$icons[$ctid]);
           $js = ($rid > 0) ? TRUE : FALSE;
+          list($results,$total) = osi_progress($rid,$ctid,FALSE);
+          drupal_add_js(array('osi' => array('complete' => ($results== $total))),'setting');
+          drupal_add_js($path .'/category.js'); 
         }            
       }
+      elseif ($delta == 'category-report') { // display the current category report(s)
+        if ($ctid = osi_get_current_category())  {
+          if ($user->uid) {
+            $rid = reset(osi_rid($ctid,$user->uid)); // , $ctid);
+            list($results,$total) = osi_progress($rid,$ctid,FALSE);
+            if ($results == $total) {
+              $title = t('Module Report');
+              $result = db_fetch_object(db_query("SELECT * FROM {osi_take} WHERE rid = %d", $rid));
+              $content = '<p>'.t('This assessment completed between %start and %end', array('%start' => format_date($result->created), '%end' => format_date($result->changed))).'</p>'; 
+              $answers = _osi_get_answers(TRUE);
+              $results = db_query("SELECT count(nid) as counted,result FROM {osi_rid} WHERE rid = %d GROUP BY result", $rid);
+              $row = array_fill_keys(array_keys($answers),'0');
+              while ($total = db_fetch_array($results)) {
+                $row[$total['result']] = $total['counted'];
+              }
+              $content .= '<h4>'.t('1. Your Results').'</h4>'.theme('table',array_values($answers),array(array_values($row)));
+              $results = db_query("SELECT nid,result FROM {osi_rid} WHERE rid = %d AND result in (1,2)", $rid);
+              $nodes = array();
+              while ($result = db_fetch_array($results)) {
+                $node = node_load($result['nid']);
+                $node->result = $result['result'];
+                $nodes[] = $node;
+              }
+              $content .= '<h4>'.t('2. Areas for Improvement or Continued Work').'</h4>'.theme('osi_improvements',$nodes);
+              $results = db_query("SELECT nid,result FROM {osi_rid} WHERE rid = %d AND result in (4)", $rid);
+              $nodes = array();
+              while ($result = db_fetch_array($results)) {
+                $nodes[] = node_load($result['nid']);
+              }
+              $content .= '<h4>'.t('3. Areas of Innovation').'</h4>'.theme('osi_innovations',$nodes);
+              $content .= '<h4>'.t('4. Your Comments').'</h4>'.views_embed_view('osi_comments','default',$user->uid,$ctid);
+              //$content .= '<pre>'.print_r($rid,TRUE).'</pre>';
+              //$content .= '<pre>'.print_r($answers,TRUE).'</pre>';
+            }
+          }
+        }
+      } 
       elseif ($delta == 'category-blocks') { // display the completion status of all categories
         $icons = _osi_categories($lang);
         foreach($icons as $ctid => $icon) {
@@ -520,7 +570,7 @@ function osi_block($op = 'list', $delta = 0) {
         drupal_add_js($path .'/progressbar.js'); 
         drupal_add_js($path .'/jquery.progressbar.min.js'); 
       } 
-      // drupal_add_css($path .'/osi-block.css'); 
+      drupal_add_css($path .'/osi-block.css'); 
       return $block;
       break;
   } /* switch */
@@ -534,8 +584,8 @@ function osi_block($op = 'list', $delta = 0) {
 function _osi_category_status($rid,$ctid) {
   $cat = taxonomy_get_term($ctid);
   list($results,$total) = osi_progress($rid,$ctid,FALSE);
-  // $cat_path = url('node/'.osi_nid($ctid));
-  $cat_path = url('taxonomy/term/'.$ctid);
+  $cat_path = url('node/'.osi_nid($ctid));
+  // $cat_path = url('taxonomy/term/'.$ctid);
   $content = '<a href="'.$cat_path.'"><div class="osi-category-icon osi-category-icon-'.$ctid.'"></div><div class="osi-category-name">'.$cat->name.'</div></a>';
   if ($total && $rid) {
     $result = sprintf('%d%%',floor(100*$results/$total));
@@ -1225,7 +1275,9 @@ function osi_scores($rids, $filter_tid = 0) {
     */
     $scores[$cat->tid] = array();
     foreach($rids as $rid => $tid) {
-      $scores[$cat->tid][$rid] = array();
+      if ($tid == $cat->tid) {
+        $scores[$cat->tid][$rid] = array();
+      }
     }
   }
   if ($filter_tid) { // filter via nat to the standards in this tid
@@ -1438,6 +1490,7 @@ function osi_list($account = NULL, $filter_string = '') {
   $filters = array('unanswered' => 0, 'answered' => 1, 'all' => -1);
   $f = check_plain($filter_string);
   $filter = ($f && isset($filters[$f])) ?  $filters[$f] : -1;
+  // die("filter: $filter"); 
   $path = drupal_get_path('module', 'osi');
   drupal_add_css($path .'/osi.css');
   drupal_add_js($path. '/osi.js','module');
@@ -1450,21 +1503,25 @@ function osi_list($account = NULL, $filter_string = '') {
   foreach($cterms as $term) {
     $indicators[$term->tid] = array();
   }
+  // get a tree of standards
   $vid = variable_get('osi_vid', 0);
   $terms = taxonomy_get_tree($vid);
+  // echo count($terms); die();
   $results = array();
   foreach ($terms as $term) { // for each standard, get the meta data and indicators, and build a structured array
     osi_standard_data($term);
+    // print_r($term);
     if ($term->node) {
       $rid = $rids[$term->cat->tid];
       osi_standard_indicators($term,$rid,$filter);
-      // print_r($term); die();
       // print_r($rids); die();
       if (count($term->indicators) > 0) {
+        // print "\n cat tid: ".$term->cat->tid;
         $indicators[$term->cat->tid][$term->tid] = $term->indicators;
       }
     }
   }
+  // print_r($indicators);
   $output = '<dl class="osi-user osi-uncollapsed">';
   $header = NULL; // $filter ? array('Indicator','Response','Last Change') : array('Indicator');
   foreach($indicators as $cat_tid => $standards) {
@@ -1473,6 +1530,7 @@ function osi_list($account = NULL, $filter_string = '') {
     $incat = 1;
     $output .= '<dt><a class="osi-collapsible osi-category">'.$cat->name.'</a></dt><dd><dl class="osi-uncollapsed">';
     foreach($standards as $standard_tid => $indicators) {
+      // print_r($standards); die();
       $standard = taxonomy_get_term($standard_tid);
       $output .= '<dt><a class="osi-collapsible osi-standard">'.($incst++).'. '.$standard->name.'</a></dt><dd class="osi-standard">';
       $rows = array();
@@ -1721,6 +1779,7 @@ function osi_progress($rid, $tid = 0, $formatted = 1) {
   }
   else { // if ($tid) { // filter by category
     $cterm = taxonomy_get_term($tid); 
+    $use_language = !empty($cterm->language);
     $terms = osi_standard_terms($tid); 
     $arg = implode(',',array_keys($terms));
     if (empty($arg)) {
@@ -1735,11 +1794,18 @@ function osi_progress($rid, $tid = 0, $formatted = 1) {
       }
     }
     if (!$results) {
-      $results = db_result(db_query($test = "SELECT count(*) FROM {osi_rid} o INNER JOIN {node} n ON o.nid = n.tnid INNER JOIN {term_node} tn ON n.vid = tn.vid WHERE o.rid = %d AND n.type = 'osi' AND n.language = '%s' AND n.status = 1 AND tn.tid IN ($arg)",$rid,$cterm->language));
+      if ($use_language) 
+        $sql = "SELECT count(*) FROM {osi_rid} o INNER JOIN {node} n ON o.nid = n.tnid INNER JOIN {term_node} tn ON n.vid = tn.vid WHERE o.rid = %d AND n.type = 'osi' AND n.status = 1 AND tn.tid IN ($arg) AND n.language = '%s'";
+      else 
+        $sql = "SELECT count(*) FROM {osi_rid} o INNER JOIN {node} n ON o.nid = n.nid INNER JOIN {term_node} tn ON n.vid = tn.vid WHERE o.rid = %d AND n.type = 'osi' AND n.status = 1 AND tn.tid IN ($arg)";
+      $results = db_result(db_query($sql,$rid,$cterm->language));
       cache_set($cid, $results,'cache_osi');
     }
-    $total = db_result(db_query("SELECT count(*) FROM {node} n INNER JOIN {term_node} tn ON n.vid = tn.vid WHERE n.language = '%s' AND n.type = 'osi' AND n.status = 1 AND tn.tid IN ($arg)",$cterm->language));
+    $sql = "SELECT count(*) FROM {node} n INNER JOIN {term_node} tn ON n.vid = tn.vid WHERE n.type = 'osi' AND n.status = 1 AND tn.tid IN ($arg)";
+    if ($use_language) $sql .= " AND n.language = '%s'";
+    $total = db_result(db_query($sql, $cterm->language));
   }
+  //  if (3 == $user->uid) { print_r($cterm); print_r($test); print_r($results); echo "arg $arg, tid $tid, rid $rid"; die(); }
   if ($total && $formatted) {
     $h = floor(100 * $results / $total);
     $t = 100 - $h;
@@ -1789,6 +1855,8 @@ function osi_report_table($account = NULL, $filter_tid = 0, $rid_list = '', $pag
     $rids = array_flip(osi_rid(NULL,$uid));
   }
   $scores = osi_scores($rids, $filter_tid);
+  // print_r($rids); // die(); 
+  // print_r($filter_tid); die(); 
   // print_r($scores); die('test');
   $path = drupal_get_path('module', 'osi');
   drupal_add_css($path .'/osi.css');
@@ -2195,6 +2263,32 @@ function theme_osi_aggregate_score_row_details($score, $standard, $style, $total
   return $rows;
 }
 
+function theme_osi_improvements($nodes) {
+  if (empty($nodes)) {
+    return 'Congratulations, there are no areas of improvement or continued work based on your responses.';
+  }
+  $answers = _osi_get_answers(TRUE);
+  $output = '<ul>';
+  foreach($nodes as $node) {
+    $output .= '<li>'.l($node->title,'node/'.$node->nid).' [<strong>'.$answers[$node->result].'</strong>]</li>';
+  }
+  $output .= '</ul>';
+  return 'Here are your areas of improvement or continued work based on your responses:'.$output;
+}
+
+function theme_osi_innovations($nodes) {
+  if (empty($nodes)) {
+    return 'Based on your responses, you have no areas of innovation.';
+  }
+  $output = '<ul>';
+  foreach($nodes as $node) {
+    $output .= '<li>'.l($node->title,'node/'.$node->nid).'</li>';
+  }
+  $output .= '</ul>';
+  return 'Following are the area(s) of innovation based on your response:'.$output;
+}
+
+
 /* load in osi data for a standard term/rid: nat related node, cat/subcat, user scores */
 /* return FALSE if there is no corresponding nat term! */
 
@@ -2583,9 +2677,11 @@ function osi_nodeapi(&$node, $op, $a3, $a4) {
   if ($op == 'view' && in_array($node->type,array($stype,$ctype)) && $a4) { // a4 means 'page' when op == 'view'
     $category_tid = osi_node_category_tid($node); 
     // print_r($node); print_r($category_tid); die('test');
-    // save the last view value
+    // save the nid value of the last standard viewed
     $rid = current(osi_rid($category_tid)); 
-    db_query('UPDATE {osi_take} SET last_nid = %d WHERE rid = %d',$node->nid,$rid);
+    if ($node->type == $stype) {
+      db_query('UPDATE {osi_take} SET last_nid = %d WHERE rid = %d',$node->nid,$rid);
+    }
     $section_tid = 0;
     switch($node->type) {
       case $ctype: // find out if i'm in the top level category
@@ -2603,6 +2699,7 @@ function osi_nodeapi(&$node, $op, $a3, $a4) {
         if (!empty($GLOBALS['user']->uid)) {
           drupal_add_js($path. '/rstatus.js','module');
         }
+        // die('test');
         break;  
       case $stype: // a 'standard' node, display the resources if i'm done my category [and hide the indicators]
         if (!is_object(current($node->nat))) {
@@ -2651,7 +2748,7 @@ function osi_nodeapi(&$node, $op, $a3, $a4) {
         if ($ind = db_fetch_object($result)) {
           $node->osi_next_standard = $ind;
         }
-        $result = db_query("SELECT n.title, n.nid, s.$sql_sort_field FROM {node} n LEFT JOIN {term_node} t ON n.nid = t.nid LEFT JOIN {content_type_standard} s ON n.vid = s.vid WHERE s.$sql_sort_field <= %d AND n.nid != %d AND n.type = 'standard' AND t.tid = %d $order LIMIT 1", $my_sort_value, $node->nid, $section_tid);
+        $result = db_query("SELECT n.title, n.nid, s.$sql_sort_field FROM {node} n LEFT JOIN {term_node} t ON n.nid = t.nid LEFT JOIN {content_type_standard} s ON n.vid = s.vid WHERE s.$sql_sort_field <= %d AND n.nid != %d AND n.type = 'standard' AND t.tid = %d $order DESC LIMIT 1", $my_sort_value, $node->nid, $section_tid);
         if ($ind = db_fetch_object($result)) {
           $node->osi_prev_standard = $ind;
         }
@@ -2659,12 +2756,17 @@ function osi_nodeapi(&$node, $op, $a3, $a4) {
     } // end switch
     if ($section_tid) {
       $category_tid = current(array_keys(taxonomy_get_parents($section_tid)));
+      if (empty($category_tid)) {
+        $category_tid = $section_tid;
+      }
       $category_nodes = nat_get_nids(array($category_tid));
       $category_nid = current(array_keys($category_nodes));
       $breadcrumb = drupal_get_breadcrumb();
       if (isset($section_nodes) && 1 >= count($breadcrumb)) {
         $breadcrumb[] = l(current($category_nodes),'node/'.$category_nid);
-        $breadcrumb[] = l(current($section_nodes),'node/'.$section_nid);
+        if ($section_nid != $category_nid) {
+          $breadcrumb[] = l(current($section_nodes),'node/'.$section_nid);
+        }
         drupal_set_breadcrumb($breadcrumb);
       }
     }
@@ -3046,4 +3148,8 @@ function _osi_rid_list($rid_list, $uid) {
     }
   }
   return $rids;
+}
+
+function osi_menu_alter(&$items) {
+  $items['user/%user_category/edit']['title'] = 'Edit Your Account';
 }
