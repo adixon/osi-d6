@@ -5,6 +5,7 @@
  */
 function osi_context_default_contexts() {
   $export = array();
+
   $context = new stdClass;
   $context->disabled = FALSE; /* Edit this to true to make a default context disabled initially */
   $context->api_version = 3;
@@ -40,8 +41,8 @@ function osi_context_default_contexts() {
     ),
   );
   $context->condition_mode = 0;
-
   $export['category'] = $context;
+
   $context = new stdClass;
   $context->disabled = FALSE; /* Edit this to true to make a default context disabled initially */
   $context->api_version = 3;
@@ -80,8 +81,8 @@ function osi_context_default_contexts() {
   // Translatables
   // Included for use with string extractors like potx.
   t('Front page and user page.');
-
   $export['front-user'] = $context;
+
   $context = new stdClass;
   $context->disabled = FALSE; /* Edit this to true to make a default context disabled initially */
   $context->api_version = 3;
@@ -107,11 +108,23 @@ function osi_context_default_contexts() {
           'region' => 'sidebar_last',
           'weight' => 0,
         ),
+        'views-Indicators-block_1' => array(
+          'module' => 'views',
+          'delta' => 'Indicators-block_1',
+          'region' => 'content',
+          'weight' => 0,
+        ),
+        'osi-standard-comments' => array(
+          'module' => 'osi',
+          'delta' => 'standard-comments',
+          'region' => 'content',
+          'weight' => 10,
+        ),
       ),
     ),
   );
   $context->condition_mode = 0;
-
   $export['standard'] = $context;
+
   return $export;
 }
