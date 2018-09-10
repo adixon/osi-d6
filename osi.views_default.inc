@@ -239,7 +239,7 @@ if (\'categories\' == arg(0) && arg(1)) {
   }
 }
 ?>');
-  $handler->override_option('header_format', '2');
+  $handler->override_option('header_format', '3');
   $handler->override_option('header_empty', 1);
   $handler->override_option('items_per_page', 0);
   $handler->override_option('style_plugin', 'list');
@@ -468,9 +468,23 @@ if (\'categories\' == arg(0) && arg(1)) {
       'relationship' => 'none',
     ),
     'language' => array(
+      'operator' => 'in',
+      'value' => array(
+        '***CURRENT_LANGUAGE***' => '***CURRENT_LANGUAGE***',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
       'id' => 'language',
       'table' => 'node',
       'field' => 'language',
+      'override' => array(
+        'button' => 'Override',
+      ),
+      'relationship' => 'none',
     ),
   ));
   $handler->override_option('access', array(
@@ -484,7 +498,7 @@ if (\'categories\' == arg(0) && arg(1)) {
   $handler->override_option('header_format', '4');
   $handler->override_option('header_empty', 1);
   $handler->override_option('empty', 'No indicators.');
-  $handler->override_option('empty_format', '4');
+  $handler->override_option('empty_format', '1');
   $handler->override_option('use_ajax', TRUE);
   $handler->override_option('items_per_page', 0);
   $handler->override_option('style_plugin', 'list');
@@ -1029,6 +1043,134 @@ if (\'categories\' == arg(0) && arg(1)) {
     'name' => 'navigation',
   ));
   $handler = $view->new_display('page', 'Public', 'page_2');
+  $handler->override_option('fields', array(
+    'name' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+      ),
+      'link_to_taxonomy' => 0,
+      'exclude' => 1,
+      'id' => 'name',
+      'table' => 'term_data',
+      'field' => 'name',
+      'override' => array(
+        'button' => 'Override',
+      ),
+      'relationship' => 'none',
+    ),
+    'field_number_value' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 0,
+        'ellipsis' => 0,
+        'html' => 0,
+      ),
+      'link_to_node' => 0,
+      'label_type' => 'none',
+      'format' => 'default',
+      'multiple' => array(
+        'group' => TRUE,
+        'multiple_number' => '',
+        'multiple_from' => '',
+        'multiple_reversed' => FALSE,
+      ),
+      'exclude' => 1,
+      'id' => 'field_number_value',
+      'table' => 'node_data_field_number',
+      'field' => 'field_number_value',
+      'override' => array(
+        'button' => 'Override',
+      ),
+      'relationship' => 'none',
+    ),
+    'title' => array(
+      'label' => '',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+      ),
+      'link_to_node' => 1,
+      'exclude' => 0,
+      'id' => 'title',
+      'table' => 'node',
+      'field' => 'title',
+      'relationship' => 'none',
+      'override' => array(
+        'button' => 'Override',
+      ),
+    ),
+    'changed' => array(
+      'label' => 'Last change',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'absolute' => 0,
+        'link_class' => '',
+        'alt' => '',
+        'rel' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'target' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+        'strip_tags' => 0,
+      ),
+      'empty' => '',
+      'hide_empty' => 0,
+      'empty_zero' => 0,
+      'hide_alter_empty' => 1,
+      'date_format' => 'small',
+      'custom_date_format' => '',
+      'exclude' => 1,
+      'id' => 'changed',
+      'table' => 'node',
+      'field' => 'changed',
+      'relationship' => 'none',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+    ),
+  ));
   $handler->override_option('arguments', array(
     'tid' => array(
       'default_action' => 'ignore',
