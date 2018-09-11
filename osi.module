@@ -25,27 +25,25 @@ define('OSI_LAST_COMPLETE', 1);
 define('OSI_LAST_IF_COMPLETE',2);
 define('OSI_DEBUG',0);
 
-/* some hard coded stuff that might need to be changd in the future */
+/* get the top level categories */
 
 function _osi_categories($lang = NULL, $ctid = 0) {
-  $categories = array(); 
-  $categories[] = array('en' => '1', 'fr' => '1', 'label'  => t('Governance & Strategic Leadership Module'));
-  $categories[] = array('en' => '14', 'fr' => '14', 'label'  => t('Human Resources Module'));
-  $categories[] = array('en' => '25', 'label'  => t('Operations Resources Module'));
-  $categories[] = array('en' => '26', 'label'  => t('Program/Service Management Module'));
-  $categories[] = array('en' => '27', 'label'  => t('PHA Engagement Module'));
-//  $categories[] = array('en' => '47', 'fr' => '101', 'label' => t('Governance'));
-//  $categories[] = array('en' => '48', 'fr' => '105', 'label' => t('Operations'));
-//  $categories[] = array('en' => '49', 'fr' => '106', 'label' => t('Human Resources'));
   if (empty($lang)) {
     $lang = 'en';
   }
-  $return = array();
-  foreach($categories as $category) {
-    if ($ctid == $category[$lang]) {
-      return array($ctid => $category['label']);
+  $standard_vid = variable_get('osi_standard_vid',0);
+  $cats = taxonomy_get_tree($standard_vid);
+  $return = array(); 
+  foreach ($cats as $cat) { // a tree of categories and subcategories
+    $cat_lang = $cat->language ? $cat->language : 'en';
+    if ($cat_lang == $lang && empty($cat->depth)) {
+      //$nids = nat_get_nids(array($cat->tid)); 
+      //$nid = key($nids);
+      if ($ctid == $cat->tid) {
+        return array($ctid => $cat->name);
+      }
+      $return[$cat->tid] = $cat->name;
     }
-    $return[$category[$lang]] = $category['label'];
   }
   return $return;
 }
