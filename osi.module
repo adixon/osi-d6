@@ -73,7 +73,7 @@ function osi_help($path ='', $args = array()) {
  * Implementation of hook_perm().
  */
 function osi_perm() {
-  return array('take osi question', 'create osi question', 'edit own osi question','administer osi configuration','view aggregate osi results', 'view osi user report');
+  return array('take osi question', 'view own osi summary', 'create osi question', 'edit own osi question','administer osi configuration','view aggregate osi results', 'view osi user report');
 }
 
 /**
@@ -161,7 +161,7 @@ function osi_menu() {
     'ignored page callback' => 'osi_report_combined',
     'page callback' => 'osi_report_table',
     'page arguments' => array(1,4,5),
-    'access arguments' => array('take osi question'),
+    'access arguments' => array('view own osi summary'),
     'type' => MENU_LOCAL_TASK,
     'weight' => 4,
   );
@@ -179,8 +179,7 @@ function osi_menu() {
     'title' => 'Table', 
     'page callback' => 'osi_report_table', 
     'page arguments' => array(1,4,5),
-//    'access arguments' => array('take osi question'), 
-    'access arguments' => array('administer osi configuration'), 
+    'access arguments' => array('view own osi summary'),
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
 /*
@@ -229,8 +228,7 @@ function osi_menu() {
     'title' => 'Compare Assessments', 
     'page callback' => 'osi_compare',
     'page arguments' => array(1),
-    'ignore access arguments' => array('take osi question'), 
-    'access arguments' => array('administer osi configuration'),
+    'access arguments' => array('take osi question'), 
     'type' => MENU_LOCAL_TASK,
     'weight' => 2,
   );
@@ -238,8 +236,7 @@ function osi_menu() {
     'title' => 'Compare Assessments', 
     'page callback' => 'osi_compare', 
     'page arguments' => array(1,3,4),
-    'ignore access arguments' => array('take osi question'), 
-    'access arguments' => array('administer osi configuration'),
+    'access arguments' => array('take osi question'), 
     'type' => MENU_LOCAL_TASK,
     'weight' => 5,
   );
@@ -441,8 +438,18 @@ function osi_get_current_category() {
 
 function osi_block($op = 'list', $delta = 0) {
 
-      global $user, $language;
-      $lang = $language->language;
+  global $user, $language;
+  $lang = $language->language;
+  if (arg(0) == 'user' && !empty(arg(1))) {
+    $uid = (integer) check_plain(arg(1));
+    if (!user_access('administer users') && ($user->uid != $uid)) {
+      return;
+    }
+    $account = user_load($uid);
+  }
+  else {
+    $account = clone($user);
+  }
 
   switch ($op) {
 
@@ -467,11 +474,11 @@ function osi_block($op = 'list', $delta = 0) {
         case 23: // assessment menu
           $block_title = 'My Assessment';
           $content = '<ul class="tabs primary">';
-          $content .= '<li><a href="/user/'.$user->uid.'/osi_list">Indicators</a></li>';
-          $content .= '<li><a href="/user/'.$user->uid.'/usernotes">My Notes and Files</a></li>';
-          $content .= '<li><a href="/user/'.$user->uid.'/osi_report">Results</a></li>';
-          $content .= '<li><a href="/user/'.$user->uid.'/osi_compare">Compare Assessments</a></li>';
-          $content .= '<li><a href="/user/'.$user->uid.'/edit">My Profile</a></li>';
+          $content .= '<li><a href="/user/'.$account->uid.'/osi_list">Indicators</a></li>';
+          $content .= '<li><a href="/user/'.$account->uid.'/usernotes">My Notes and Files</a></li>';
+          $content .= '<li><a href="/user/'.$account->uid.'/osi_report">Results</a></li>';
+          $content .= '<li><a href="/user/'.$account->uid.'/osi_compare">Compare Assessments</a></li>';
+          $content .= '<li><a href="/user/'.$account->uid.'/edit">My Profile</a></li>';
           $content .= '</ul>';
           $block = array('title' => $block_title, 'content' => $content, 'weight' => '-101');
           return($block);
@@ -499,8 +506,8 @@ function osi_block($op = 'list', $delta = 0) {
         }
         $icons = _osi_categories($lang,$ctid);
 
-        if ($user->uid) {
-          $rid = reset(osi_rid($ctid,$user->uid)); // , $ctid);
+        if ($account->uid) {
+          $rid = reset(osi_rid($ctid,$account->uid)); // , $ctid);
           $title = t('Assessment Progress');
         }
         if (1 == count($icons) && isset($icons[$ctid])) { // sanity check, should emit an error otherwise
@@ -513,12 +520,33 @@ function osi_block($op = 'list', $delta = 0) {
       }
       elseif ($delta == 'category-report') { // display the current category report(s)
         if ($ctid = osi_get_current_category())  {
-          if ($user->uid) {
-            $rid = reset(osi_rid($ctid,$user->uid)); // , $ctid);
+          if ($account->uid) {
+            $rid = reset(osi_rid($ctid,$account->uid)); // , $ctid);
             list($results,$total) = osi_progress($rid,$ctid,FALSE);
             if ($results == $total) {
               $title = t('Category Report');
-              $content = _osi_category_report($user->uid, $ctid, $rid);
+              $content = _osi_category_report($account->uid, $ctid, $rid);
+              if (module_exists('print')) {
+                drupal_add_css(drupal_get_path('module', 'print') .'/css/printlinks.css');
+                $format = theme('print_format_link');
+                $links = array();
+                $links['print'] = array(
+                  'href' => PRINT_PATH .'/user/'.$account->uid.'/osi_category_report/'.$ctid,
+                  'title' => $format['text'], //'Print a pdf of this report',
+                  'attributes' => $format['attributes'],
+                  'html' => $format['html']
+                );
+                if (module_exists('print_pdf')) {
+                  $format = theme('print_pdf_format_link');
+                  $links['print_pdf'] = array(
+                    'href' => PRINTPDF_PATH .'/user/'.$account->uid.'/osi_category_report/'.$ctid,
+                    'title' => $format['text'], //'Print a pdf of this report',
+                    'attributes' => $format['attributes'],
+                    'html' => $format['html']
+                  );
+                }
+                $content .= theme('links',$links);
+              }
             }
           }
         }
@@ -527,8 +555,8 @@ function osi_block($op = 'list', $delta = 0) {
         $icons = _osi_categories($lang);
         foreach($icons as $ctid => $icon) {
           $rid = 0;
-          if ($user->uid) { 
-            $rid = reset(osi_rid($ctid,$user->uid)); 
+          if ($account->uid) { 
+            $rid = reset(osi_rid($ctid,$account->uid)); 
             $js = $js || (($rid > 0) ? TRUE : FALSE);
           }
           $content .= '<div class="osi-category-block">'._osi_category_status($rid,$ctid).'</div>';
@@ -1849,7 +1877,7 @@ function osi_category_report($account = NULL, $filter_tid = 0, $rid_list = '', $
   }
 
   if ($page) {
-    drupal_set_title('Category Report');
+    drupal_set_title(t('Category Report'));
   }
   $filter_tid = (integer) $filter_tid;
   if ($filter_tid) { 
