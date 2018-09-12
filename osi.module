@@ -148,6 +148,14 @@ function osi_menu() {
     'access arguments' => array('take osi question'), 
     'type' => MENU_CALLBACK, 
   );
+  $items['user/%user/osi_category_report'] = array(
+    'title' => 'Category Report',
+    'page callback' => 'osi_category_report',
+    'page arguments' => array(1,3,4),
+    'access arguments' => array('take osi question'),
+    'type' => MENU_CALLBACK,
+    'weight' => 4,
+  );
   $items['user/%user/osi_report'] = array(
     'title' => 'Summary Results',
     'ignored page callback' => 'osi_report_combined',
@@ -509,33 +517,8 @@ function osi_block($op = 'list', $delta = 0) {
             $rid = reset(osi_rid($ctid,$user->uid)); // , $ctid);
             list($results,$total) = osi_progress($rid,$ctid,FALSE);
             if ($results == $total) {
-              $title = t('Module Report');
-              $result = db_fetch_object(db_query("SELECT * FROM {osi_take} WHERE rid = %d", $rid));
-              $content = '<p>'.t('This assessment completed between %start and %end', array('%start' => format_date($result->created), '%end' => format_date($result->changed))).'</p>'; 
-              $answers = _osi_get_answers(TRUE);
-              $results = db_query("SELECT count(nid) as counted,result FROM {osi_rid} WHERE rid = %d GROUP BY result", $rid);
-              $row = array_fill_keys(array_keys($answers),'0');
-              while ($total = db_fetch_array($results)) {
-                $row[$total['result']] = $total['counted'];
-              }
-              $content .= '<h4>'.t('1. Your Results').'</h4>'.theme('table',array_values($answers),array(array_values($row)));
-              $results = db_query("SELECT nid,result FROM {osi_rid} WHERE rid = %d AND result in (1,2)", $rid);
-              $nodes = array();
-              while ($result = db_fetch_array($results)) {
-                $node = node_load($result['nid']);
-                $node->result = $result['result'];
-                $nodes[] = $node;
-              }
-              $content .= '<h4>'.t('2. Areas for Improvement or Continued Work').'</h4>'.theme('osi_improvements',$nodes);
-              $results = db_query("SELECT nid,result FROM {osi_rid} WHERE rid = %d AND result in (4)", $rid);
-              $nodes = array();
-              while ($result = db_fetch_array($results)) {
-                $nodes[] = node_load($result['nid']);
-              }
-              $content .= '<h4>'.t('3. Areas of Innovation').'</h4>'.theme('osi_innovations',$nodes);
-              $content .= '<h4>'.t('4. Your Comments').'</h4>'.views_embed_view('osi_comments','default',$user->uid,$ctid);
-              //$content .= '<pre>'.print_r($rid,TRUE).'</pre>';
-              //$content .= '<pre>'.print_r($answers,TRUE).'</pre>';
+              $title = t('Category Report');
+              $content = _osi_category_report($user->uid, $ctid, $rid);
             }
           }
         }
@@ -1812,6 +1795,91 @@ function osi_progress($rid, $tid = 0, $formatted = 1) {
   return $formatted ? $output : array($results,$total);
 }
 
+
+/**
+ * function _osi_category_report
+ *
+ * Internal function to generate the text of a category report
+ * No argument filtering or testing.
+ */
+function _osi_category_report($uid, $ctid, $rid) {
+  $result = db_fetch_object(db_query("SELECT * FROM {osi_take} WHERE rid = %d", $rid));
+  $content = '<p>'.t('This assessment completed between %start and %end', array('%start' => format_date($result->created), '%end' => format_date($result->changed))).'</p>'; 
+  $answers = _osi_get_answers(TRUE); // get the answer labels
+  $results = db_query("SELECT count(nid) as counted,result FROM {osi_rid} WHERE rid = %d GROUP BY result", $rid);
+  $row = array_fill_keys(array_keys($answers),'0');
+  while ($total = db_fetch_array($results)) {
+    $row[$total['result']] = $total['counted'];
+  }
+  $content .= '<h4>'.t('1. Your Results').'</h4>'.theme('table',array_values($answers),array(array_values($row)), array('class' => 'osi-category-report'));
+  $results = db_query("SELECT nid,result FROM {osi_rid} WHERE rid = %d AND result in (1,2)", $rid);
+  $nodes = array();
+  while ($result = db_fetch_array($results)) {
+    $node = node_load($result['nid']);
+    $node->result = $result['result'];
+    $nodes[] = $node;
+  }
+  $content .= '<h4>'.t('2. Areas for Improvement or Continued Work').'</h4>'.theme('osi_improvements',$nodes);
+  $results = db_query("SELECT nid,result FROM {osi_rid} WHERE rid = %d AND result in (4)", $rid);
+  $nodes = array();
+  while ($result = db_fetch_array($results)) {
+    $nodes[] = node_load($result['nid']);
+  }
+  $content .= '<h4>'.t('3. Areas of Innovation').'</h4>'.theme('osi_innovations',$nodes);
+  $content .= '<h4>'.t('4. Your Comments').'</h4>'.views_embed_view('osi_comments','default',$uid,$ctid);
+  return $content;
+}
+
+
+/**
+ * function osi_category_report($account, $filter_tid, $rids)
+ *
+ * Retrieve a table report for a "take"
+ * Either a table report for the user's current assessment, or a comparison table of multiple assessments
+ * Possibly filtered by category/subcategory using the filter_tid
+ *
+ */
+
+function osi_category_report($account = NULL, $filter_tid = 0, $rid_list = '', $page = TRUE) {
+  global $user;
+  $uid = $account->uid ? $account->uid : $user->uid;
+  if (!user_access('administer users') && ($user->uid != $uid)) {
+    drupal_access_denied();
+    exit;
+  }
+
+  if ($page) {
+    drupal_set_title('Category Report');
+  }
+  $filter_tid = (integer) $filter_tid;
+  if ($filter_tid) { 
+    // if it's subcategory, get the category
+    $category_tid = $filter_tid;
+    $parents = taxonomy_get_parents($filter_tid);
+    if (count($parents)) {
+      $category_tid = reset($parents);
+    }
+    /* rids are the unique assessment ids - defaults to the user's current assessment */
+    if ($rid_list) { // convert to the format I need, an array of rid => tid
+      $rids = _osi_rid_list($rid_list,$uid);
+    }
+    else {  // this just generates a singleton array of rid => category_tid for the last assement of this category
+      $rids = array_flip(osi_rid($category_tid,$uid));
+    }
+  }
+  else { // no rid_lists allowed, just get the most recent assessment for each category
+    $rid_list = '';
+    $rids = array_flip(osi_rid(NULL,$uid));
+  }
+  $output = ''; //<dl class="osi-user osi-uncollapsed">';
+  foreach($rids as $rid => $category_tid) {
+    $cat = taxonomy_get_term($category_tid);
+    $output .= '<h2>'. $cat->name .'</h2>';
+    $output .= _osi_category_report($uid, $category_tid, $rid);
+  }
+  return $output;
+} 
+
 /**
  * function osi_report_table($account, $filter_tid, $rids)
  *
@@ -2271,7 +2339,7 @@ function theme_osi_improvements($nodes) {
     $output .= '<li>'.l($node->title,'node/'.$node->nid).' [<strong>'.$answers[$node->result].'</strong>]</li>';
   }
   $output .= '</ul>';
-  return 'Here are your areas of improvement or continued work based on your responses:'.$output;
+  return 'The following are your areas of improvement or continued work based on your responses:'.$output;
 }
 
 function theme_osi_innovations($nodes) {
@@ -2283,7 +2351,7 @@ function theme_osi_innovations($nodes) {
     $output .= '<li>'.l($node->title,'node/'.$node->nid).'</li>';
   }
   $output .= '</ul>';
-  return 'Following are the area(s) of innovation based on your response:'.$output;
+  return 'The following are your area(s) of innovation based on your responses:'.$output;
 }
 
 
