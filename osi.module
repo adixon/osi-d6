@@ -73,7 +73,7 @@ function osi_help($path ='', $args = array()) {
  * Implementation of hook_perm().
  */
 function osi_perm() {
-  return array('take osi question', 'view own osi summary', 'create osi question', 'edit own osi question','administer osi configuration','view aggregate osi results', 'view osi user report');
+  return array('take osi question', 'view own osi summary', 'compare own osi assessments', 'view own osi category report', 'create osi question', 'edit own osi question','administer osi configuration','view aggregate osi results', 'view osi user report');
 }
 
 /**
@@ -149,12 +149,19 @@ function osi_menu() {
     'type' => MENU_CALLBACK, 
   );
   $items['user/%user/osi_category_report'] = array(
+    'title' => 'Category Reports',
+    'page callback' => 'osi_category_report',
+    'page arguments' => array(1),
+    'access arguments' => array('view own osi category report'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 4,
+  );
+  $items['user/%user/osi_category_report/%'] = array(
     'title' => 'Category Report',
     'page callback' => 'osi_category_report',
     'page arguments' => array(1,3,4),
     'access arguments' => array('take osi question'),
     'type' => MENU_CALLBACK,
-    'weight' => 4,
   );
   $items['user/%user/osi_report'] = array(
     'title' => 'Summary Results',
@@ -163,7 +170,7 @@ function osi_menu() {
     'page arguments' => array(1,4,5),
     'access arguments' => array('view own osi summary'),
     'type' => MENU_LOCAL_TASK,
-    'weight' => 4,
+    'weight' => 5,
   );
 /*
   $items['user/%user/osi_report/combined'] = array(
@@ -228,7 +235,7 @@ function osi_menu() {
     'title' => 'Compare Assessments', 
     'page callback' => 'osi_compare',
     'page arguments' => array(1),
-    'access arguments' => array('take osi question'), 
+    'access arguments' => array('compare own osi assessments'), 
     'type' => MENU_LOCAL_TASK,
     'weight' => 2,
   );
@@ -236,7 +243,7 @@ function osi_menu() {
     'title' => 'Compare Assessments', 
     'page callback' => 'osi_compare', 
     'page arguments' => array(1,3,4),
-    'access arguments' => array('take osi question'), 
+    'access arguments' => array('compare own osi assessments'), 
     'type' => MENU_LOCAL_TASK,
     'weight' => 5,
   );
@@ -1876,10 +1883,10 @@ function osi_category_report($account = NULL, $filter_tid = 0, $rid_list = '', $
     exit;
   }
 
-  if ($page) {
-    drupal_set_title(t('Category Report'));
-  }
   $filter_tid = (integer) $filter_tid;
+  if ($page) {
+    drupal_set_title($filter_tid ? t('Category Report') : t('Category Reports'));
+  }
   if ($filter_tid) { 
     // if it's subcategory, get the category
     $category_tid = $filter_tid;
