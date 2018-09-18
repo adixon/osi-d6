@@ -17,6 +17,7 @@ if (Drupal.jsEnabled) {
     $('form.osi-answers-form').each(function() {
       var keys = this.id.split('-');
       var nid = keys[keys.length - 1];
+      $(this).css('background','#F5F6F7');
       $.get(Drupal.settings.basePath+"osi/update/" + nid,function(data) {
         $('#edit-result-'+nid+'-'+data).attr('checked',1).parents('form').css('background','#FFFFCC');
       });
