@@ -418,6 +418,9 @@ function osi_theme() {
     'osi_compare_form' => array('arguments' => array('form' => NULL)),
     'osi_improvements' => array('arguments' => array('nodes' => NULL)),
     'osi_innovations' => array('arguments' => array('nodes' => NULL)),
+    'osi_category_name' => array('arguments' => array('term' => NULL)),
+    'osi_indicator_title' => array('arguments' => array('node' => NULL)),
+    'osi_standard_title' => array('arguments' => array('node' => NULL)),
   );
 }
 
@@ -602,7 +605,7 @@ function _osi_category_status($rid,$ctid) {
   list($results,$total) = osi_progress($rid,$ctid,FALSE);
   $cat_path = url('node/'.osi_nid($ctid));
   // $cat_path = url('taxonomy/term/'.$ctid);
-  $content = '<a href="'.$cat_path.'"><div class="osi-category-icon osi-category-icon-'.$ctid.'"></div><div class="osi-category-name">'.$cat->name.'</div></a>';
+  $content = '<a href="'.$cat_path.'"><div class="osi-category-icon osi-category-icon-'.$ctid.'"></div><div class="osi-category-name">'.theme('osi_category_name',$cat).'</div></a>';
   if ($total && $rid) {
     $result = sprintf('%d%%',floor(100*$results/$total));
     $content .= '<span class="progressBar" id="osi-status-'.$ctid.'">'.$result.'</span>';
@@ -1072,12 +1075,13 @@ function osi_render_answers_form(&$form_state, $node, $previous) {
   }
   // Create form.
   // run the glossary filter on the title and body
-  $title = _glossary_filter_process(filter_resolve_format($node->format), $node->title);
+  $node->title = trim(_glossary_filter_process(filter_resolve_format($node->format), $node->title));
   $body = _glossary_filter_process(filter_resolve_format($node->format), $node->body);
   $form['question'] = array(
     '#type' => 'markup', 
     //'#value' => '<h3 class="osi-question">Indicator</h3><div class="osi-indicator">'. $indct . '. &ldquo;'.trim($title) .'&rdquo;</div>', 
-    '#value' => '<div class="osi-indicator">'. trim($title) .'</div>', 
+    '#value' => theme('osi_indicator_title', $node),
+    // '<div class="osi-indicator">'. trim($title) .'</div>', 
   );
   $form['hint'] = array(
     '#type' => 'markup', 
@@ -1464,6 +1468,17 @@ function osi_scores_aggregate($style, $standard_tid, $filter_users, $details) {
   return $scores;
 }
 
+function theme_osi_category_name($cat) {
+  return $cat->name;
+}
+function theme_osi_indicator_title($node) {
+  return '<div class="osi-indicator">'. $node->title .'</div>'; 
+}
+
+function theme_osi_standard_title($node) {
+  return '<div class="osi-standard">'. $node->title .'</div>'; 
+}
+
 function theme_osi_options_title($text,$path) {
   return l($text,$path);
 }
@@ -1630,7 +1645,7 @@ function osi_report_chart($account = NULL, $filter_tid = 0, $rid_list = '', $pag
       $output .= '<ol>'; 
       foreach($scores as $tid => $cat_scores) {
         $cat = taxonomy_get_term($tid);
-        $output .= '<h2>'.$cat->name.'</h2>'; 
+        $output .= '<h2>'.theme('category_name',$cat).'</h2>'; 
         foreach($cat_scores as $tid => $subcat_scores) {
           $subcat = taxonomy_get_term($tid);
           $output .= '<h4>'.$subcat->name.'</h4>'; 
@@ -1846,7 +1861,7 @@ function _osi_category_report($uid, $ctid, $rid) {
   while ($total = db_fetch_array($results)) {
     $row[$total['result']] = $total['counted'];
   }
-  $content .= '<h4>'.t('1. Your Results').'</h4>'.theme('table',array_values($answers),array(array_values($row)), array('class' => 'osi-category-report'));
+  $content .= '<h4>'.t('Your Results').'</h4>'.theme('table',array_values($answers),array(array_values($row)), array('class' => 'osi-category-report'));
   $results = db_query("SELECT nid,result FROM {osi_rid} WHERE rid = %d AND result in (1,2)", $rid);
   $nodes = array();
   while ($result = db_fetch_array($results)) {
@@ -1854,14 +1869,14 @@ function _osi_category_report($uid, $ctid, $rid) {
     $node->result = $result['result'];
     $nodes[] = $node;
   }
-  $content .= '<h4>'.t('2. Areas for Improvement or Continued Work').'</h4>'.theme('osi_improvements',$nodes);
+  $content .= '<h4>'.t('Areas for Improvement or Continued Work').'</h4>'.theme('osi_improvements',$nodes);
   $results = db_query("SELECT nid,result FROM {osi_rid} WHERE rid = %d AND result in (4)", $rid);
   $nodes = array();
   while ($result = db_fetch_array($results)) {
     $nodes[] = node_load($result['nid']);
   }
-  $content .= '<h4>'.t('3. Areas of Innovation').'</h4>'.theme('osi_innovations',$nodes);
-  $content .= '<h4>'.t('4. Your Comments').'</h4>'.views_embed_view('osi_comments','default',$uid,$ctid);
+  $content .= '<h4>'.t('Areas of Innovation').'</h4>'.theme('osi_innovations',$nodes);
+  $content .= '<h4>'.t('Your Comments').'</h4>'.views_embed_view('osi_comments','default',$uid,$ctid);
   return $content;
 }
 
@@ -1909,7 +1924,7 @@ function osi_category_report($account = NULL, $filter_tid = 0, $rid_list = '', $
   $output = ''; //<dl class="osi-user osi-uncollapsed">';
   foreach($rids as $rid => $category_tid) {
     $cat = taxonomy_get_term($category_tid);
-    $output .= '<h2>'. $cat->name .'</h2>';
+    $output .= '<h2>'. theme('osi_category_name',$cat) .'</h2>';
     $output .= _osi_category_report($uid, $category_tid, $rid);
   }
   return $output;
@@ -2369,26 +2384,43 @@ function theme_osi_improvements($nodes) {
     return 'Congratulations, there are no areas of improvement or continued work based on your responses.';
   }
   $answers = _osi_get_answers(TRUE);
-  $output = '<ul>';
+  $output = '<dl>';
+  $standard_tid = 0;
   foreach($nodes as $node) {
-    $output .= '<li>'.l($node->title,'node/'.$node->nid).' [<strong>'.$answers[$node->result].'</strong>]</li>';
+    $tid = key($node->taxonomy);
+    if ($tid != $standard_tid) {
+      $standard_tid = $tid;
+      $nids = nat_get_nids(array($tid)); 
+      $standard = node_load(key($nids));
+      $output .= '<dt>'.theme('osi_standard_title',$standard).'</dt>';
+    }
+    $title = theme('osi_indicator_title', $node);
+    $output .= '<dd>'.l($title,'node/'.$node->nid, array('html' => 1)).' [<strong>'.$answers[$node->result].'</strong>]</dd>';
   }
-  $output .= '</ul>';
-  return 'The following are your areas of improvement or continued work based on your responses:'.$output;
+  $output .= '</dl>';
+  return '<p>'.t('The following are your areas of improvement or continued work based on your responses:').'</p>'.$output;
 }
 
 function theme_osi_innovations($nodes) {
   if (empty($nodes)) {
     return 'Based on your responses, you have no areas of innovation.';
   }
-  $output = '<ul>';
+  $output = '<dl>';
+  $standard_tid = 0;
   foreach($nodes as $node) {
-    $output .= '<li>'.l($node->title,'node/'.$node->nid).'</li>';
+    $tid = key($node->taxonomy);
+    if ($tid != $standard_tid) {
+      $standard_tid = $tid;
+      $nids = nat_get_nids(array($tid)); 
+      $standard = node_load(key($nids));
+      $output .= '<dt>'.theme('osi_standard_title',$standard).'</dt>';
+    }
+    $title = theme('osi_indicator_title', $node);
+    $output .= '<dd>'.l($title,'node/'.$node->nid, array('html' => 1)).'</dd>';
   }
-  $output .= '</ul>';
-  return 'The following are your area(s) of innovation based on your responses:'.$output;
+  $output .= '</dl>';
+  return '<p>'.t('The following are your area(s) of innovation based on your responses:').'</p>'.$output;
 }
-
 
 /* load in osi data for a standard term/rid: nat related node, cat/subcat, user scores */
 /* return FALSE if there is no corresponding nat term! */
