@@ -31,11 +31,17 @@ function osi_context_default_contexts() {
           'region' => 'sidebar_last',
           'weight' => 0,
         ),
-        'views-category-block_1' => array(
+        'views-Standards-block_1' => array(
           'module' => 'views',
-          'delta' => 'category-block_1',
+          'delta' => 'Standards-block_1',
           'region' => 'sidebar_last',
           'weight' => 1,
+        ),
+        'views-Resources-block_4' => array(
+          'module' => 'views',
+          'delta' => 'Resources-block_4',
+          'region' => 'content_bottom',
+          'weight' => 0,
         ),
       ),
     ),
@@ -47,12 +53,12 @@ function osi_context_default_contexts() {
   $context->disabled = FALSE; /* Edit this to true to make a default context disabled initially */
   $context->api_version = 3;
   $context->name = 'front-user';
-  $context->description = 'Front page and user page.';
+  $context->description = 'Authenticated user category blocks';
   $context->tag = '';
   $context->conditions = array(
-    'path' => array(
+    'user' => array(
       'values' => array(
-        '<front>' => '<front>',
+        'authenticated user' => 'authenticated user',
       ),
     ),
     'user_page' => array(
@@ -71,16 +77,16 @@ function osi_context_default_contexts() {
           'module' => 'osi',
           'delta' => 'category-blocks',
           'region' => 'content',
-          'weight' => -1,
+          'weight' => 0,
         ),
       ),
     ),
   );
-  $context->condition_mode = 0;
+  $context->condition_mode = 1;
 
   // Translatables
   // Included for use with string extractors like potx.
-  t('Front page and user page.');
+  t('Authenticated user category blocks');
   $export['front-user'] = $context;
 
   $context = new stdClass;
@@ -114,11 +120,17 @@ function osi_context_default_contexts() {
           'region' => 'content',
           'weight' => 0,
         ),
+        'views-Resources-block_1' => array(
+          'module' => 'views',
+          'delta' => 'Resources-block_1',
+          'region' => 'content_bottom',
+          'weight' => 0,
+        ),
         'osi-standard-comments' => array(
           'module' => 'osi',
           'delta' => 'standard-comments',
-          'region' => 'content',
-          'weight' => 10,
+          'region' => 'content_bottom',
+          'weight' => 1,
         ),
       ),
     ),

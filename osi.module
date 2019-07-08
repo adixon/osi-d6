@@ -29,23 +29,25 @@ define('OSI_DEBUG',0);
 
 function _osi_categories($lang = NULL, $ctid = 0) {
   $categories = array(); 
-  $categories[] = array('en' => '4', 'fr' => '6', 'label'  => t('Governance, Policies and Human Resources'));
-  $categories[] = array('en' => '18', 'label'  => t('Environment & Climate (including external relations)'));
-  $categories[] = array('en' => '19', 'label'  => t('Service Delivery'));
+  $categories[] = array('en' => '2', 'label'  => t('Board Member Self-Assessment Module'));
+//  $categories[] = array('en' => '14', 'fr' => '14', 'label'  => t('Human Resources Module'));
+//  $categories[] = array('en' => '25', 'label'  => t('Operations Resources Module'));
+//  $categories[] = array('en' => '26', 'label'  => t('Program/Service Management Module'));
+//  $categories[] = array('en' => '27', 'label'  => t('PHA Engagement Module'));
 //  $categories[] = array('en' => '47', 'fr' => '101', 'label' => t('Governance'));
 //  $categories[] = array('en' => '48', 'fr' => '105', 'label' => t('Operations'));
 //  $categories[] = array('en' => '49', 'fr' => '106', 'label' => t('Human Resources'));
-  if (!empty($lang)) {
-    $return = array();
-    foreach($categories as $category) {
-      if ($ctid == $category[$lang]) {
-        return array($ctid => $category['label']);
-      }
-      $return[$category[$lang]] = $category['label'];
-    }
-    return $return;
+  if (empty($lang)) {
+    $lang = 'en';
   }
-  return $categories;
+  $return = array();
+  foreach($categories as $category) {
+    if ($ctid == $category[$lang]) {
+      return array($ctid => $category['label']);
+    }
+    $return[$category[$lang]] = $category['label'];
+  }
+  return $return;
 }
 
 /**
@@ -113,6 +115,20 @@ function osi_menu() {
 
   $items = array();
 
+  $items['osi/term/%'] = array(
+    'title' => 'NAT Term redirect',
+    'page callback' => 'osi_nat_term_redirect',
+    'page arguments' => array(2),
+    'access arguments' => array('take osi question'), 
+    'type' => MENU_CALLBACK, 
+  );
+  $items['osi/node/%'] = array(
+    'title' => 'NAT Node redirect',
+    'page callback' => 'osi_nat_node_redirect',
+    'page arguments' => array(2),
+    'access arguments' => array('take osi question'), 
+    'type' => MENU_CALLBACK, 
+  );
   $items['admin/settings/osi'] = array(
     'title' => 'Self-Assessment Indicator Configuration', 
     'description' => 'Configure Self-Assessment Indicators for users.', 
@@ -139,8 +155,8 @@ function osi_menu() {
     'ignored page callback' => 'osi_report_combined',
     'page callback' => 'osi_report_table',
     'page arguments' => array(1,4,5),
-//    'access arguments' => array('take osi question'),
-    'access arguments' => array('administer osi configuration'), 
+    'access arguments' => array('take osi question'),
+//     'access arguments' => array('administer osi configuration'), 
     'type' => MENU_LOCAL_TASK,
     'weight' => 4,
   );
@@ -302,8 +318,31 @@ function osi_menu() {
 }
 
 /* 
- * utility function called from menu
+ * utility functions called from menu
  * 
+ */
+
+/* 
+ * redirect from a term to corresponding nat node
+ *
+ */
+
+function osi_nat_term_redirect($tid) {
+  $nids = nat_get_nids(array($tid)); 
+  drupal_goto('node/' . key($nids)); 
+}
+
+/* 
+ * redirect from a node to corresponding nat term
+ *
+ */
+
+function osi_nat_node_redirect($nid) {
+  $term = nat_get_term($nid);
+  drupal_goto('taxonomy/term/' . $term->tid); 
+}
+
+/* 
  * determine if current user language matches category language
  *
  */
@@ -429,8 +468,8 @@ function osi_block($op = 'list', $delta = 0) {
       $title = $content = '';
       $weight='-10';
       if ($delta == 'category-status') { // a single category status block, calculate the current category
-        while(list($i,$v) = each($user->roles)) { if($v == 'participant') $p = true; }
-        if(!$p) return;
+        //while(list($i,$v) = each($user->roles)) { if($v == 'participant') $p = true; }
+        // if(!$p) return;
         if ('node' == arg(0) && is_numeric(arg(1)) && !arg(2)) {
           $node = node_build_content(node_load(arg(1)),FALSE,TRUE);
           if (isset($node->osi_navigation)) {
@@ -443,17 +482,22 @@ function osi_block($op = 'list', $delta = 0) {
           }
         }
         if (!$ctid)  return;
+        // die("ctid: $ctid");
 	// $args = explode('/',$_SERVER['REQUEST_URI']);
 	// if($args[1] == 'category' && $ctid != $args[2]) return;
         $icons = _osi_categories($lang,$ctid);
 
         if ($user->uid) {
-          $rid = reset(osi_rid($ctid,$user->uid)); // , $ctid);
+          $rids = osi_rid($ctid,$user->uid); // , $ctid);
+          $rid = reset($rids);
           $title = t('Assessment Progress');
         }
         if (1 == count($icons) && isset($icons[$ctid])) { // sanity check, should emit an error otherwise
           $content = _osi_category_status($rid,$ctid,$base_path.'/images/'.$icons[$ctid]);
           $js = ($rid > 0) ? TRUE : FALSE;
+          list($results,$total) = osi_progress($rid,$ctid,FALSE);
+          drupal_add_js(array('osi' => array('complete' => ($results== $total))),'setting');
+          drupal_add_js($path .'/category.js'); 
         }            
       }
       elseif ($delta == 'category-blocks') { // display the completion status of all categories
@@ -461,7 +505,8 @@ function osi_block($op = 'list', $delta = 0) {
         foreach($icons as $ctid => $icon) {
           $rid = 0;
           if ($user->uid) { 
-            $rid = reset(osi_rid($ctid,$user->uid)); 
+            $rids = osi_rid($ctid,$user->uid); 
+            $rid = reset($rids);
             $js = $js || (($rid > 0) ? TRUE : FALSE);
           }
           $content .= '<div class="osi-category-block">'._osi_category_status($rid,$ctid).'</div>';
@@ -498,8 +543,8 @@ function osi_block($op = 'list', $delta = 0) {
 function _osi_category_status($rid,$ctid) {
   $cat = taxonomy_get_term($ctid);
   list($results,$total) = osi_progress($rid,$ctid,FALSE);
-  // $cat_path = url('node/'.osi_nid($ctid));
-  $cat_path = url('taxonomy/term/'.$ctid);
+  $cat_path = url('node/'.osi_nid($ctid));
+  // $cat_path = url('taxonomy/term/'.$ctid);
   $content = '<a href="'.$cat_path.'"><div class="osi-category-icon osi-category-icon-'.$ctid.'"></div><div class="osi-category-name">'.$cat->name.'</div></a>';
   if ($total && $rid) {
     $result = sprintf('%d%%',floor(100*$results/$total));
@@ -557,7 +602,7 @@ function osi_user($op, &$edit, &$account, $category = NULL) {
         '#type' => 'user_profile_item',
         '#title' => theme('osi_options_title','Review','user/'.$account->uid.'/osi_list'),
         '#attributes' => array('class' => 'osi-list'),
-        '#value' => t('To review your answers so far, you can click on the "Your Answers" link above'),
+        '#value' => t('To review your answers so far, you can click on the "Your Answers" link above.'),
         '#weight' => 6,
       );
 /*
@@ -882,7 +927,8 @@ function osi_view(&$node, $teaser = FALSE, $page = FALSE) {
   global $user;
   // jquery_ui_add(array('ui.draggable', 'ui.droppable', 'ui.sortable'));
   $category_tid = osi_category($node->nid);
-  $rid = reset(osi_rid($category_tid, $user->uid)); 
+  $rids = osi_rid($category_tid, $user->uid); 
+  $rid = reset($rids);
   $node = node_prepare($node, $teaser);
   $term = $node->osi_term = _osi_term($node);
   if ($page && $user->uid) { // only view in context, except for search spider ...
@@ -894,6 +940,9 @@ function osi_view(&$node, $teaser = FALSE, $page = FALSE) {
     // retrieve answers keyed on translation nid
     $tnid = $node->tnid ? $node->tnid : $node->nid;
     $answer = db_fetch_object(db_query('SELECT * FROM {osi_rid} WHERE rid = %d AND nid = %d', $rid, $tnid));
+    if (empty($answer)) {
+      $answer = new stdClass();
+    }
     if (!$teaser) {  // if not a teaser display, provide the form
       $path = drupal_get_path('module', 'osi');
       drupal_add_css($path .'/osi.css');
@@ -970,7 +1019,8 @@ function osi_render_answers_form(&$form_state, $node, $previous) {
   }
   // Create form.
   // run the glossary filter on the title and body
-  $title = _glossary_filter_process(filter_resolve_format($node->format), $node->title);
+  $number = $node->field_number['0']['value'];
+  $title = _glossary_filter_process(filter_resolve_format($node->format), $number.'. '.$node->title);
   $body = _glossary_filter_process(filter_resolve_format($node->format), $node->body);
   $form['question'] = array(
     '#type' => 'markup', 
@@ -1065,11 +1115,11 @@ function osi_ajax_status_standard($node) {
   $result = '';
   $category_tid = osi_node_category_tid($node);
   $rid = current(osi_rid($category_tid));
-  $tid = db_result(db_query("SELECT tid FROM {nat} WHERE nid = %d AND vid = 1",$node->nid));
-// var_dump($category_tid.' '.$rid.' '.$node->nid);
+  $tid = db_result(db_query("SELECT tid FROM {nat} WHERE nid = %d AND vid = 3", $node->nid));
+  // var_dump($category_tid.' '.$rid.' '.$node->nid); die();
   if ($tid) {
     $score = osi_standard_score($tid, $rid); // load the current user's score data
-// var_dump($score);
+ // var_dump($score);
     $status_string = '<div class="last-change">Last change: !last_change</div><div class="progress">!progress Indicators responded</div><div class="status!completion"></div>';
     $progress = t('%count/%tcount', array('%count' => $score->answer_count, '%tcount' => $score->node_count));
     if ($score->last_change) {
@@ -1189,7 +1239,9 @@ function osi_scores($rids, $filter_tid = 0) {
     */
     $scores[$cat->tid] = array();
     foreach($rids as $rid => $tid) {
-      $scores[$cat->tid][$rid] = array();
+      if ($tid == $cat->tid) {
+        $scores[$cat->tid][$rid] = array();
+      }
     }
   }
   if ($filter_tid) { // filter via nat to the standards in this tid
@@ -1402,6 +1454,7 @@ function osi_list($account = NULL, $filter_string = '') {
   $filters = array('unanswered' => 0, 'answered' => 1, 'all' => -1);
   $f = check_plain($filter_string);
   $filter = ($f && isset($filters[$f])) ?  $filters[$f] : -1;
+  // die("filter: $filter"); 
   $path = drupal_get_path('module', 'osi');
   drupal_add_css($path .'/osi.css');
   drupal_add_js($path. '/osi.js','module');
@@ -1414,21 +1467,25 @@ function osi_list($account = NULL, $filter_string = '') {
   foreach($cterms as $term) {
     $indicators[$term->tid] = array();
   }
+  // get a tree of standards
   $vid = variable_get('osi_vid', 0);
   $terms = taxonomy_get_tree($vid);
+  // echo count($terms); die();
   $results = array();
   foreach ($terms as $term) { // for each standard, get the meta data and indicators, and build a structured array
     osi_standard_data($term);
+    // print_r($term);
     if ($term->node) {
       $rid = $rids[$term->cat->tid];
       osi_standard_indicators($term,$rid,$filter);
-      // print_r($term); die();
       // print_r($rids); die();
       if (count($term->indicators) > 0) {
+        // print "\n cat tid: ".$term->cat->tid;
         $indicators[$term->cat->tid][$term->tid] = $term->indicators;
       }
     }
   }
+  // print_r($indicators);
   $output = '<dl class="osi-user osi-uncollapsed">';
   $header = NULL; // $filter ? array('Indicator','Response','Last Change') : array('Indicator');
   foreach($indicators as $cat_tid => $standards) {
@@ -1437,6 +1494,7 @@ function osi_list($account = NULL, $filter_string = '') {
     $incat = 1;
     $output .= '<dt><a class="osi-collapsible osi-category">'.$cat->name.'</a></dt><dd><dl class="osi-uncollapsed">';
     foreach($standards as $standard_tid => $indicators) {
+      // print_r($standards); die();
       $standard = taxonomy_get_term($standard_tid);
       $output .= '<dt><a class="osi-collapsible osi-standard">'.($incst++).'. '.$standard->name.'</a></dt><dd class="osi-standard">';
       $rows = array();
@@ -1685,6 +1743,7 @@ function osi_progress($rid, $tid = 0, $formatted = 1) {
   }
   else { // if ($tid) { // filter by category
     $cterm = taxonomy_get_term($tid); 
+    $use_language = !empty($cterm->language);
     $terms = osi_standard_terms($tid); 
     $arg = implode(',',array_keys($terms));
     if (empty($arg)) {
@@ -1699,11 +1758,18 @@ function osi_progress($rid, $tid = 0, $formatted = 1) {
       }
     }
     if (!$results) {
-      $results = db_result(db_query($test = "SELECT count(*) FROM {osi_rid} o INNER JOIN {node} n ON o.nid = n.tnid INNER JOIN {term_node} tn ON n.vid = tn.vid WHERE o.rid = %d AND n.type = 'osi' AND n.language = '%s' AND n.status = 1 AND tn.tid IN ($arg)",$rid,$cterm->language));
+      if ($use_language) 
+        $sql = "SELECT count(*) FROM {osi_rid} o INNER JOIN {node} n ON o.nid = n.tnid INNER JOIN {term_node} tn ON n.vid = tn.vid WHERE o.rid = %d AND n.type = 'osi' AND n.status = 1 AND tn.tid IN ($arg) AND n.language = '%s'";
+      else 
+        $sql = "SELECT count(*) FROM {osi_rid} o INNER JOIN {node} n ON o.nid = n.nid INNER JOIN {term_node} tn ON n.vid = tn.vid WHERE o.rid = %d AND n.type = 'osi' AND n.status = 1 AND tn.tid IN ($arg)";
+      $results = db_result(db_query($sql,$rid,$cterm->language));
       cache_set($cid, $results,'cache_osi');
     }
-    $total = db_result(db_query("SELECT count(*) FROM {node} n INNER JOIN {term_node} tn ON n.vid = tn.vid WHERE n.language = '%s' AND n.type = 'osi' AND n.status = 1 AND tn.tid IN ($arg)",$cterm->language));
+    $sql = "SELECT count(*) FROM {node} n INNER JOIN {term_node} tn ON n.vid = tn.vid WHERE n.type = 'osi' AND n.status = 1 AND tn.tid IN ($arg)";
+    if ($use_language) $sql .= " AND n.language = '%s'";
+    $total = db_result(db_query($sql, $cterm->language));
   }
+  //  if (3 == $user->uid) { print_r($cterm); print_r($test); print_r($results); echo "arg $arg, tid $tid, rid $rid"; die(); }
   if ($total && $formatted) {
     $h = floor(100 * $results / $total);
     $t = 100 - $h;
@@ -1753,6 +1819,8 @@ function osi_report_table($account = NULL, $filter_tid = 0, $rid_list = '', $pag
     $rids = array_flip(osi_rid(NULL,$uid));
   }
   $scores = osi_scores($rids, $filter_tid);
+  // print_r($rids); // die(); 
+  // print_r($filter_tid); die(); 
   // print_r($scores); die('test');
   $path = drupal_get_path('module', 'osi');
   drupal_add_css($path .'/osi.css');
@@ -2547,9 +2615,11 @@ function osi_nodeapi(&$node, $op, $a3, $a4) {
   if ($op == 'view' && in_array($node->type,array($stype,$ctype)) && $a4) { // a4 means 'page' when op == 'view'
     $category_tid = osi_node_category_tid($node); 
     // print_r($node); print_r($category_tid); die('test');
-    // save the last view value
+    // save the nid value of the last standard viewed
     $rid = current(osi_rid($category_tid)); 
-    db_query('UPDATE {osi_take} SET last_nid = %d WHERE rid = %d',$node->nid,$rid);
+    if ($node->type == $stype) {
+      db_query('UPDATE {osi_take} SET last_nid = %d WHERE rid = %d',$node->nid,$rid);
+    }
     $section_tid = 0;
     switch($node->type) {
       case $ctype: // find out if i'm in the top level category
@@ -2567,6 +2637,7 @@ function osi_nodeapi(&$node, $op, $a3, $a4) {
         if (!empty($GLOBALS['user']->uid)) {
           drupal_add_js($path. '/rstatus.js','module');
         }
+        // die('test');
         break;  
       case $stype: // a 'standard' node, display the resources if i'm done my category [and hide the indicators]
         if (!is_object(current($node->nat))) {
@@ -2615,7 +2686,7 @@ function osi_nodeapi(&$node, $op, $a3, $a4) {
         if ($ind = db_fetch_object($result)) {
           $node->osi_next_standard = $ind;
         }
-        $result = db_query("SELECT n.title, n.nid, s.$sql_sort_field FROM {node} n LEFT JOIN {term_node} t ON n.nid = t.nid LEFT JOIN {content_type_standard} s ON n.vid = s.vid WHERE s.$sql_sort_field <= %d AND n.nid != %d AND n.type = 'standard' AND t.tid = %d $order LIMIT 1", $my_sort_value, $node->nid, $section_tid);
+        $result = db_query("SELECT n.title, n.nid, s.$sql_sort_field FROM {node} n LEFT JOIN {term_node} t ON n.nid = t.nid LEFT JOIN {content_type_standard} s ON n.vid = s.vid WHERE s.$sql_sort_field <= %d AND n.nid != %d AND n.type = 'standard' AND t.tid = %d $order DESC LIMIT 1", $my_sort_value, $node->nid, $section_tid);
         if ($ind = db_fetch_object($result)) {
           $node->osi_prev_standard = $ind;
         }
@@ -3010,4 +3081,8 @@ function _osi_rid_list($rid_list, $uid) {
     }
   }
   return $rids;
+}
+
+function osi_menu_alter(&$items) {
+  $items['user/%user_category/edit']['title'] = 'Edit Your Account';
 }

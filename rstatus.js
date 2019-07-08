@@ -4,6 +4,7 @@ if (Drupal.jsEnabled) {
       var node = $(this);
       var nid = node.text().trim();
       if (nid.length > 0) {
+	      console.log('getting status for '+nid);
         node.load(Drupal.settings.basePath+"osi/rstatus/" + nid);
       }
     });

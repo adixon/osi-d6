@@ -4,6 +4,7 @@
 #block-views-Standards-block_1 li.views-row .views-field-nid .field-content {
   display: none;
 }
+/*
 #block-views-Standards-block_1 li.views-row .views-field-nid .last-change {
   display: inline-block;
   width: 50%;
@@ -12,6 +13,7 @@
   display: inline-block;
   width: 30%;
 }
+*/
 #block-views-Standards-block_1 li.views-row .views-field-nid .status-complete {
   display: inline-block;
   width: 15%;

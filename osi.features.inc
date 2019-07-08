@@ -8,6 +8,9 @@ function osi_ctools_plugin_api() {
   if ($module == "context" && $api == "context") {
     return array("version" => 3);
   }
+  elseif ($module == "strongarm" && $api == "strongarm") {
+    return array("version" => 1);
+  }
 }
 
 /**
@@ -16,7 +19,7 @@ function osi_ctools_plugin_api() {
 function osi_node_info() {
   $items = array(
     'category' => array(
-      'name' => t('Category or Subcategory'),
+      'name' => t('Module'),
       'module' => 'features',
       'description' => t('A name and description of a category or subcategory/section of Standards. Each entry has a corresponding term in the Category vocabulary, linked via the NAT mechanism. These terms apply to Standards.'),
       'has_title' => '1',
@@ -38,7 +41,7 @@ function osi_node_info() {
       'help' => '',
     ),
   );
-  return $items + _osi_node_info();
+  return $items +  _osi_node_info();
 }
 
 /**
