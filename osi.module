@@ -1,6 +1,7 @@
 <?php 
 // BETA
 // $Id$
+// opcache_reset();
 
 include_once('osi.features.inc');
 
@@ -429,6 +430,8 @@ function osi_block($op = 'list', $delta = 0) {
       $blocks['category-resources'] = array('info' => 'Category Resources');
       $blocks['standard-comments'] = array('info' => 'Standard Comments');
       $blocks[23] = array('info' => 'Assessment menu');
+      $blocks['take-start'] = array('info' => 'Assessment Start');
+      $blocks['take-complete'] = array('info' => 'Assessment Complete');
 
       return $blocks;
 
@@ -449,7 +452,7 @@ function osi_block($op = 'list', $delta = 0) {
           $content .= '</ul>';
           $block = array('title' => $block_title, 'content' => $content, 'weight' => '-101');
           return($block);
-        case 'standard-comments':
+        case 'standard-comments': // a block to display comments for standards
           if ('node' == arg(0) && '' == arg(2)) {
             $nid = arg(1);
             $node = node_load($nid);
@@ -459,6 +462,49 @@ function osi_block($op = 'list', $delta = 0) {
             return($block);
           }
           return;
+        case 'take-start':
+          $rids = array_filter(osi_rid()); 
+          if (empty($rids)) {
+            if (empty($user->osi_rids)) {
+              $content = drupal_get_form('osi_take_start_form', $user);
+              $block = array('title' => 'Start Your Survey', 'content' => $content, 'weight' => '-101');
+              return $block;
+            }
+          }
+          return;
+        case 'take-complete':
+          $rids = array_filter(osi_rid()); 
+          if (!empty($rids)) { // show if complete 
+            $categories = array_keys(_osi_categories($lang));
+            $complete = TRUE;
+            $takes = array(); // get detailed list of takes that are not confirmed complete.
+            foreach($categories as $tid) {
+              $complete = $complete && osi_complete($tid);
+	      $result = db_query('SELECT * FROM {osi_take} WHERE uid = %d AND tid = %d AND status = 0 ORDER BY rid DESC',$user->uid, $tid);
+	      if ($take = db_fetch_object($result)) {
+	        $takes[] = $take;
+	      }
+            }
+	    if ($complete) {
+              if (count($takes)) {
+                $content = drupal_get_form('osi_take_complete_form', $user);
+              // $content .= '<pre>'.print_r($progress, TRUE).'</pre>';
+                $block = array('title' => 'Complete your Survey', 'content' => $content, 'weight' => '-101');
+              //  print_r($block); die();
+		return $block;
+	      }
+	      else {
+		$content = '<p>Thank you for completing the survey</p>';
+                $block = array('title' => 'Complete', 'content' => $content, 'weight' => '-101');
+                return $block;
+	      }
+	    }
+            /*else {
+              foreach($takes as $take) {
+            */
+          }
+          return;
+        
       }
 
       $path = drupal_get_path('module', 'osi');
@@ -483,13 +529,13 @@ function osi_block($op = 'list', $delta = 0) {
         }
         if (!$ctid)  return;
         // die("ctid: $ctid");
-	// $args = explode('/',$_SERVER['REQUEST_URI']);
-	// if($args[1] == 'category' && $ctid != $args[2]) return;
+  // $args = explode('/',$_SERVER['REQUEST_URI']);
+  // if($args[1] == 'category' && $ctid != $args[2]) return;
         $icons = _osi_categories($lang,$ctid);
 
         if ($user->uid) {
           $rids = osi_rid($ctid,$user->uid); // , $ctid);
-          $rid = reset($rids);
+          $rid = $rids[$ctid]->rid;
           $title = t('Assessment Progress');
         }
         if (1 == count($icons) && isset($icons[$ctid])) { // sanity check, should emit an error otherwise
@@ -506,21 +552,23 @@ function osi_block($op = 'list', $delta = 0) {
           $rid = 0;
           if ($user->uid) { 
             $rids = osi_rid($ctid,$user->uid); 
-            $rid = reset($rids);
+            $rid = $rids[$ctid]->rid;
             $js = $js || (($rid > 0) ? TRUE : FALSE);
-          }
-          $content .= '<div class="osi-category-block">'._osi_category_status($rid,$ctid).'</div>';
+    }
+    if ($rid) {
+      $content .= '<div class="osi-category-block">'._osi_category_status($rid,$ctid).'</div>';
+    }
         }
       } 
       elseif ($delta == 'category-resources') { // display the resources for the selected cateogies
-	$args = explode('/',$_SERVER['REQUEST_URI']);
-	if($args[1] == 'category') $catid = $args[2];
+        $args = explode('/',$_SERVER['REQUEST_URI']);
+        if($args[1] == 'category') $catid = $args[2];
         $title = t('Assessment Resources');
-	$content .= views_embed_view('Resources','block_4',$args[2]); 
-	$content .= '<p> ~ <a href="/resources?keys=&term_node_tid_depth='.$args[2].'">more resources</a></p>';
-	$content .= '<p> ~ <a href="/node/add/resource">submit a resource</a></p>';
+        $content .= views_embed_view('Resources','block_4',$args[2]); 
+        $content .= '<p> ~ <a href="/resources?keys=&term_node_tid_depth='.$args[2].'">more resources</a></p>';
+        $content .= '<p> ~ <a href="/node/add/resource">submit a resource</a></p>';
         $weight = 0;
-      }	
+      }  
 
       if (!$content) return;
       $block = array('subject' => $title, 'content' => $content, 'weight' => $weight);
@@ -564,6 +612,7 @@ function osi_user($op, &$edit, &$account, $category = NULL) {
 
   global $language;
   $langcode = $language->language;
+  $rids = array_filter(osi_rid()); 
   switch($op) {
     case 'view': // todo - add preferred language?
       unset($account->content['summary']);
@@ -582,13 +631,14 @@ function osi_user($op, &$edit, &$account, $category = NULL) {
         '#attributes' => array('class' => 'osi-options'),
         '#weight' => 2,
       );
-      $account->content['osi_options']['tabs'] =  array(
+      if (!empty($rid)) { // show if complete 
+        $account->content['osi_options']['tabs'] =  array(
         '#type' => 'user_profile_item',
         '#title' => theme('osi_options_title','Tabs','user/'.$account->uid),
         '#attributes' => array('class' => 'osi-tabs'),
-        '#value' => t('To begin or continue the self-assessment, click on one of the categories below.'),
+        '#value' => t('To your continue the self-assessment, click on one of the categories below.'),
         '#weight' => 5,
-      );
+        );
 /*
       $account->content['osi_options']['changed'] =  array(
         '#type' => 'user_profile_item',
@@ -598,13 +648,14 @@ function osi_user($op, &$edit, &$account, $category = NULL) {
         '#weight' => 1,
       );
 */
-      $account->content['osi_options']['results'] =  array(
+        $account->content['osi_options']['results'] =  array(
         '#type' => 'user_profile_item',
         '#title' => theme('osi_options_title','Review','user/'.$account->uid.'/osi_list'),
         '#attributes' => array('class' => 'osi-list'),
         '#value' => t('To review your answers so far, you can click on the "Your Answers" link above.'),
         '#weight' => 6,
-      );
+        );
+      }
 /*
       $plan_nid = ($langcode == 'fr' ? 124 : 124); 
       $account->content['osi_options']['plan'] =  array(
@@ -928,7 +979,7 @@ function osi_view(&$node, $teaser = FALSE, $page = FALSE) {
   // jquery_ui_add(array('ui.draggable', 'ui.droppable', 'ui.sortable'));
   $category_tid = osi_category($node->nid);
   $rids = osi_rid($category_tid, $user->uid); 
-  $rid = reset($rids);
+  $rid = $rids[$category_tid]->rid;
   $node = node_prepare($node, $teaser);
   $term = $node->osi_term = _osi_term($node);
   if ($page && $user->uid) { // only view in context, except for search spider ...
@@ -1085,10 +1136,88 @@ function osi_render_answers_form(&$form_state, $node, $previous) {
   return $form;
 }
 
+/**
+ * function osi_take_start_form
+ *
+ * Display a form for the current user to start a new survey "take"
+ *
+ * @return
+ *  HTML output.
+ */
+function osi_take_start_form(&$form_state) {
+  $form = array();
+  // Create form.
+  $form['info'] = array(
+    '#type' => 'markup',
+    '#value' => '<p>Ready to start? Fill in the dates of the period you are evaluating and click "Start".</p>
+    <p>When you have answered all the questions, return here and confirm that you are done.</p>',
+  );
+  $form['description'] = array(
+    '#type' => 'textfield', 
+    '#title' => 'Evaluation Period', 
+    '#description' => 'Enter the start and end dates of the period you are evaluating.', 
+    '#required' => TRUE, 
+  );
+  $form['submit'] = array(
+    '#type' => 'submit', 
+    '#value' => t('Start'), 
+  );
+  $form['#submit'] = array('osi_take_start_form_submit');
+  return $form;
+}
+
+function osi_take_start_form_submit( &$form, &$form_state ){
+  $new = array('description' => $form_state['values']['description']);
+  $rids = osi_rid(NULL, NULL, $new);
+  $category_tid = current(array_keys($rids));
+  $category_node = nat_get_nids(array($category_tid));
+  $category_nid = current(array_keys($category_node));
+  drupal_goto('node/'.$category_nid);
+}
+
+/**
+ * function osi_take_complete_form
+ *
+ * Display a form for completing a survey if ready, or a status if not
+ *
+ * @param $user
+ *
+ * @return
+ *  HTML output.
+ */
+function osi_take_complete_form(&$form_state, $user) {
+
+  $form = array();
+  // Create form.
+  $form['hello'] = array(
+    '#type' => 'markup', 
+    '#value' => '<p>You have completed all the required questions.</p>
+    <p>Click "Finish" below to complete the survey, or go back to modify your answers.</p>'
+  );
+  $form['submit'] = array(
+    '#type' => 'submit', 
+    '#value' => t('Finish'), 
+  );
+  $form['#submit'] = array('osi_take_complete_form_submit');
+  return $form;
+}
+
+function osi_take_complete_form_submit( &$form, &$form_state ){
+  $rids = osi_rid();
+  foreach($rids as $rid) {
+    db_query('UPDATE {osi_take} SET status = 1 WHERE rid = %d', $rid->rid);
+  }
+  //$category_tid = current(array_keys($rids));
+  //$category_node = nat_get_nids(array($category_tid));
+  //$category_nid = current(array_keys($category_node));
+  //drupal_goto('node/'.$category_nid);
+}
+
 function osi_ajax_update($nid = 0, $result = 0) {
 
   $tid = osi_category($nid);
-  $rid = current(osi_rid($tid));
+  $rids = osi_rid($tid);
+  $rid = $rids[$tid]->rid;
   $nid = (integer) $nid;
   $result = (integer) $result;
   // watchdog('osi_debug','ajax update for %tid - %rid - %nid',array('%tid' => $tid, '%rid' => $rid, '%nid' => $nid));
@@ -1114,7 +1243,8 @@ function osi_ajax_update($nid = 0, $result = 0) {
 function osi_ajax_status_standard($node) {
   $result = '';
   $category_tid = osi_node_category_tid($node);
-  $rid = current(osi_rid($category_tid));
+  $rids = osi_rid($category_tid);
+  $rid = $rids[$category_tid]->rid;
   $tid = db_result(db_query("SELECT tid FROM {nat} WHERE nid = %d AND vid = 3", $node->nid));
   // var_dump($category_tid.' '.$rid.' '.$node->nid); die();
   if ($tid) {
@@ -1145,7 +1275,8 @@ function osi_ajax_status_standard($node) {
 function osi_render_answers_form_submit($form, &$form_state) {
   $nid = $form_state['values']['nid'];
   $category_tid = osi_category($nid);
-  $rid = current(osi_rid($category_tid));
+  $rids = osi_rid($category_tid);
+  $rid = $rids[$category_tid]->rid;
   $result = $form_state['values']['result_'.$nid];
   $previous = $form_state['values']['previous'];
   $changed = $form_state['values']['changed']; // ts of last change at form load time
@@ -1476,7 +1607,7 @@ function osi_list($account = NULL, $filter_string = '') {
     osi_standard_data($term);
     // print_r($term);
     if ($term->node) {
-      $rid = $rids[$term->cat->tid];
+      $rid = $rids[$term->cat->tid]->rid;
       osi_standard_indicators($term,$rid,$filter);
       // print_r($rids); die();
       if (count($term->indicators) > 0) {
@@ -1563,7 +1694,8 @@ function osi_report_chart($account = NULL, $filter_tid = 0, $rid_list = '', $pag
       $rids = _osi_rid_list($rid_list, $uid);
     }
     else {  // this just generates a singleton array of rid => category_tid for the last assement of this category
-      $rids = array_flip(osi_rid($category_tid,$uid));
+      $rids = osi_rid($category_tid,$uid);
+      $rids = array($rids[$category_tid]->rid => $category_tid);
     }
     $output = t('<div>Generated on %date, assessment %ri of %rids</div>',array('%date' => date('r'),'%ri' => 1, '%rids' => count($rids)));
     // get a structured array of scores
@@ -1595,7 +1727,10 @@ function osi_report_chart($account = NULL, $filter_tid = 0, $rid_list = '', $pag
   else { // generic current results, no rid filter
     $output = t('<div>Generated on %date, current assessments</div>',array('%date' => date('r')));
     $output .= $page ? '<div id="osi-chart-intro">'.variable_get('osi_chart_intro', '').'</div>' : ''; 
-    $rids = array_flip(osi_rid(NULL,$uid));
+    $rids = array();
+    foreach(osi_rid(NULL,$uid) as $tid => $rid) {
+      $rids[$rid->rid] = $tid; 
+    }
     // get a structured array of scores
     $scores = osi_scores($rids, 0);
     $chart = _osi_report_chart($scores,NULL);
@@ -1744,7 +1879,12 @@ function osi_progress($rid, $tid = 0, $formatted = 1) {
   else { // if ($tid) { // filter by category
     $cterm = taxonomy_get_term($tid); 
     $use_language = !empty($cterm->language);
-    $terms = osi_standard_terms($tid); 
+    $exclude = array();
+    $result = db_query('SELECT n.nid FROM {node} n INNER JOIN {content_type_standard} s ON n.vid = s.vid WHERE s.field_optional_value = 1');
+    while ($nid = db_result($result)) {
+      $exclude[] = $nid;
+    } 
+    $terms = osi_standard_terms($tid, $exclude); 
     $arg = implode(',',array_keys($terms));
     if (empty($arg)) {
       return;
@@ -1811,12 +1951,16 @@ function osi_report_table($account = NULL, $filter_tid = 0, $rid_list = '', $pag
       $rids = _osi_rid_list($rid_list,$uid);
     }
     else {  // this just generates a singleton array of rid => category_tid for the last assement of this category
-      $rids = array_flip(osi_rid($category_tid,$uid));
+      $rids = osi_rid($category_tid,$uid);
+      $rids = array($category_tid => $rids[$category_tid]->$rid);
     }
   }
   else { // no rid_lists allowed, just get the most recent assessment for each category
     $rid_list = '';
-    $rids = array_flip(osi_rid(NULL,$uid));
+    $rids = array();
+    foreach(osi_rid(NULL,$uid) as $tid => $rid) {
+      $rids[$rid->rid] = $tid; 
+    }
   }
   $scores = osi_scores($rids, $filter_tid);
   // print_r($rids); // die(); 
@@ -2504,47 +2648,51 @@ function osi_rid($tid = NULL, $uid = NULL, $new = FALSE) {
   }
   if (empty($user->osi_rid)) {
     $user->osi_rid = array();
+  }
+  if (empty($user->osi_rids)) {
     $user->osi_rids = array();
   }
-  // print_r($tids); die('test');
+  // print_r($user->osi_rid); print_r($tids); die('test');
   // print_r($categories); 
   $return = array();
   foreach($tids as $tid) {
     // print_r(debug_backtrace()); print_r($tids); print_r($categories); print_r($user); die();
     if (empty($user->osi_rid[$tid])) {
-      $result = db_query('SELECT rid FROM {osi_take} WHERE uid = %d AND tid = %d ORDER BY rid DESC',$uid, $tid);
+      $result = db_query('SELECT * FROM {osi_take} WHERE uid = %d AND tid = %d ORDER BY rid DESC',$uid, $tid);
       $take = db_fetch_object($result);
-      if (!$take->rid) {
-        $take->uid = $uid;
-        $take->tid = $tid;
-        $take->created = time();
-        drupal_write_record('osi_take',$take);
+      if ($take->rid) {
         $rids = array($take->rid);
-      }
-      else {
-        $rids = array($take->rid);
-        while($older = db_fetch_object($result)) {
+        while ($older = db_fetch_object($result)) {
           $rids[] = $older->rid;
         }
+        //if (!$take->status) {
+          $user->osi_rid[$tid] = $take;
+        //}
+        $user->osi_rids[$tid] = $rids;
       }
-      $user->osi_rid[$tid] = $take->rid;
-      $user->osi_rids[$tid] = $rids;
-    }
-    if ($new) {
-      // make sure they're allowed!
-      $progress = osi_progress($user->osi_rid[$tid],$tid,0);
-      if ($progress[0] < $progress[1]) {
-        return FALSE;
-      } 
       else {
-        $take = new StdClass();
-        $take->uid = $uid;
-        $take->tid = $tid;
-        $take->created = time();
-        drupal_write_record('osi_take',$take);
-        $user->osi_rid[$tid] = $take->rid;
-        array_unshift($user->osi_rids[$tid],$take->rid);
+        $user->osi_rids[$tid] = array();
       }
+    }
+    if (!empty($new)) {
+        // make sure they're allowed!
+      if (!empty($user->osi_rid[$tid])) {
+        $progress = osi_progress($user->osi_rid[$tid],$tid,0);
+        if ($progress[0] < $progress[1]) {
+          return FALSE;
+        }
+      } 
+      $take = new StdClass();
+      $take->uid = $uid;
+      $take->tid = $tid;
+      $take->created = time();
+      // print_r($new); 
+      foreach($new as $key => $value) {
+        $take->$key = $value;
+      }
+      drupal_write_record('osi_take',$take);
+      $user->osi_rid[$tid] = $take;
+      array_unshift($user->osi_rids[$tid],$take->rid);
     }
     $return[$tid] = $user->osi_rid[$tid];
   }
@@ -2616,7 +2764,8 @@ function osi_nodeapi(&$node, $op, $a3, $a4) {
     $category_tid = osi_node_category_tid($node); 
     // print_r($node); print_r($category_tid); die('test');
     // save the nid value of the last standard viewed
-    $rid = current(osi_rid($category_tid)); 
+    $rids = osi_rid($category_tid); 
+    $rid = $rids[$category_tid]->rid;
     if ($node->type == $stype) {
       db_query('UPDATE {osi_take} SET last_nid = %d WHERE rid = %d',$node->nid,$rid);
     }
@@ -2794,7 +2943,7 @@ function osi_osi_nodes($tids) {
   return $result;
 } */
 
-function osi_standard_terms($tid) { // return a list of nat-related terms of the standards in this category
+function osi_standard_terms($tid, $exclude = array()) { // return a list of nat-related terms of the standards in this category
   $type = variable_get('osi_standard_type','');
   if (!$type) return array();
   // check for recent cached version
@@ -2812,13 +2961,14 @@ function osi_standard_terms($tid) { // return a list of nat-related terms of the
   $tree = taxonomy_get_tree($term->vid, $tid, -1, $depth);
   $tids = (count($tree) > 0) ? array_map('_taxonomy_get_tid_from_term', $tree) : array($tid);
   $placeholders = db_placeholders($tids, 'int');
-  $sql = 'SELECT td.* FROM {nat} nat INNER JOIN {term_data} td USING (tid) INNER JOIN {node} n ON nat.nid = n.nid INNER JOIN {term_node} tn ON n.vid = tn.vid WHERE tn.tid IN ('. $placeholders .') AND n.status = 1 AND n.type = "'.$type.'"';
+  $sql = 'SELECT td.*,n.nid FROM {nat} nat INNER JOIN {term_data} td USING (tid) INNER JOIN {node} n ON nat.nid = n.nid INNER JOIN {term_node} tn ON n.vid = tn.vid WHERE tn.tid IN ('. $placeholders .') AND n.status = 1 AND n.type = "'.$type.'"';
   $sql .= " ORDER BY td.weight";
   $sql = db_rewrite_sql($sql); // ignore?
   $result = db_query($sql, $tids);
   $terms = array();
   while ($term = db_fetch_object($result)) {
-    $terms[$term->tid] = $term;
+    if (!in_array($term->nid,$exclude))
+      $terms[$term->tid] = $term;
   }
   cache_set($cid,$terms,'cache_osi');
   return $terms;
@@ -2869,7 +3019,8 @@ function osi_complete($tid) {
   }
   $parents = taxonomy_get_parents($tid);
   $ctid = (count($parents)) ? current($parents) : $tid;
-  $rid = current(osi_rid($ctid, $user->uid));
+  $rids = osi_rid($ctid, $user->uid);
+  $rid = $rids[$ctid]->rid;
   list($results,$total) = osi_progress($rid,$tid,FALSE);
   
   return $complete[$tid] = ($results == $total) ? 1 : 0;
@@ -2891,7 +3042,8 @@ function osi_compare($account, $category_tid = 0, $new = FALSE) {
     }
     return $output;
   }
-  $rid = reset(osi_rid($category_tid,$account->uid,$new));
+  $rids = osi_rid($category_tid,$account->uid,$new);
+  $rid = $rids[$ctid]->rid;
   if ($new) {
     if ($rid) {
       drupal_set_message('You have started a new assessment');

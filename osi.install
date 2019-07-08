@@ -32,6 +32,7 @@ function osi_schema() {
       'last_nid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
       'status' => array('type' => 'int', 'not null' => TRUE, 'unsigned' => TRUE, 'default' => 0, 'size' => 'tiny'), 
       'status_check' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+      'description' => array('type' => 'text'),
     ),
     'primary key' => array('rid'),
     'indexes' => array(
@@ -201,4 +202,12 @@ function osi_update_6003() {
     db_query("DELETE FROM {osi_take} WHERE rid = %d",$take->rid);
     // die('test');
   }
+}
+
+/* add a metadata field for each "take" */
+
+function osi_update_6004() {
+  $ret = array();
+  db_add_field($ret, 'osi_take', 'description', array('type' => 'text'));
+  return $ret;
 }
