@@ -1,7 +1,7 @@
 <?php 
 // BETA
 // $Id$
-// opcache_reset();
+//opcache_reset();
 
 include_once('osi.features.inc');
 
@@ -1001,7 +1001,8 @@ function osi_view(&$node, $teaser = FALSE, $page = FALSE) {
       $ui_path = drupal_get_path('module', 'jquery_ui').'/jquery.ui';
       drupal_add_css($ui_path.'/themes/base/ui.base.css');
       drupal_add_css($ui_path.'/themes/base/ui.theme.css');
-      $answer->rid = $user->rid; // sneak in the rid if !$answer
+      $answer->rid = $rid; // sneak in the rid if !$answer
+      $answer->readonly = $rids[$category_tid]->status; // prevent modification if complete
       $answer_content = drupal_get_form('osi_render_answers_form_'.$node->nid, $node, $answer);
     }
     else { // otherwise, just show current answers
@@ -1048,6 +1049,9 @@ function osi_forms($form_id, $args) {
  *
  * @param $node
  *
+ * @param $previous
+ *   An object containing any previous answer
+ *
  * @return
  *  HTML output.
  */
@@ -1073,6 +1077,7 @@ function osi_render_answers_form(&$form_state, $node, $previous) {
   $number = $node->field_number['0']['value'];
   $title = _glossary_filter_process(filter_resolve_format($node->format), $number.'. '.$node->title);
   $body = _glossary_filter_process(filter_resolve_format($node->format), $node->body);
+  $attributes = $previous->readonly ? array('disabled' => 'disabled') : array();
   $form['question'] = array(
     '#type' => 'markup', 
     //'#value' => '<h3 class="osi-question">Indicator</h3><div class="osi-indicator">'. $indct . '. &ldquo;'.trim($title) .'&rdquo;</div>', 
@@ -1087,6 +1092,7 @@ function osi_render_answers_form(&$form_state, $node, $previous) {
     '#options' => $options, 
     '#default_value' => $previous->result, 
     '#required' => TRUE, 
+    '#attributes' => $attributes,
   );
   $form['help'] = array(
     '#type' => 'markup', 
@@ -2737,7 +2743,8 @@ function osi_node_category_tid($node) {
 /* a two step query to get first the nid of the corresponding standard, then the parent category */
 
 function osi_category($nid) {
-  $snid = db_result(db_query("SELECT standard.nid as standardnid FROM {node} osi INNER JOIN {term_node} t ON (osi.vid = t.vid) INNER JOIN {nat} standard ON (t.tid = standard.tid AND standard.vid = 1) WHERE osi.nid = '%d'",$nid));
+  $cvid = variable_get('osi_vid',0);
+  $snid = db_result(db_query("SELECT standard.nid as standardnid FROM {node} osi INNER JOIN {term_node} t ON (osi.vid = t.vid) INNER JOIN {nat} standard ON (t.tid = standard.tid AND standard.vid = %d) WHERE osi.nid = %d",$cvid,$nid));
   return db_result(db_query("SELECT t.tid FROM {node} standard INNER JOIN {term_node} t ON (standard.vid = t.vid) WHERE standard.nid = %d", $snid));
   // return db_result(db_query("SELECT h.parent FROM {node} standard INNER JOIN {term_node} t ON (standard.vid = t.vid) INNER JOIN {term_hierarchy} h ON (t.tid = h.tid) WHERE standard.nid = %d", $snid));
 }
@@ -2759,7 +2766,6 @@ function osi_nodeapi(&$node, $op, $a3, $a4) {
   $stype = variable_get('osi_standard_type',NULL);
   $svid = variable_get('osi_standard_vid',0);
   $ctype = variable_get('osi_category_type',NULL);
-  $cvid = variable_get('osi_category_vid',0);
   if ($op == 'view' && in_array($node->type,array($stype,$ctype)) && $a4) { // a4 means 'page' when op == 'view'
     $category_tid = osi_node_category_tid($node); 
     // print_r($node); print_r($category_tid); die('test');
