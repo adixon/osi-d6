@@ -1,7 +1,7 @@
 <?php 
 // BETA
 // $Id$
-//opcache_reset();
+// opcache_reset();
 
 include_once('osi.features.inc');
 
@@ -411,14 +411,43 @@ function osi_theme() {
   );
 }
 
+/*
+ * Get current category
+ */
+function osi_get_current_category() {
+  if ('node' == arg(0) && is_numeric(arg(1)) && !arg(2)) {
+    $node = node_build_content(node_load(arg(1)),FALSE,TRUE);
+    if (isset($node->osi_navigation)) {
+      $ctid = $node->osi_navigation['category_tid'];
+    }
+  }
+  elseif (arg(0) == 'user' && in_array(arg(2),array('osi_list','osi_report'))) {
+    if (arg(4) && is_numeric(arg(4))) {
+      $ctid = arg(4);
+    }
+  }
+  return $ctid;
+}
+
+
 /**
  * Implementation of hook_block().
  */
 
 function osi_block($op = 'list', $delta = 0) {
 
-      global $user, $language;
-      $lang = $language->language;
+  global $user, $language;
+  $lang = $language->language;
+  if (arg(0) == 'user' && !empty(arg(1))) {
+    $uid = (integer) check_plain(arg(1));
+    if (!user_access('administer users') && ($user->uid != $uid)) {
+      return;
+    }
+    $account = user_load($uid);
+  }
+  else {
+    $account = clone($user);
+  }
 
   switch ($op) {
 
@@ -444,11 +473,11 @@ function osi_block($op = 'list', $delta = 0) {
         case 23: // assessment menu
           $block_title = 'My Assessment';
           $content = '<ul class="tabs primary">';
-          $content .= '<li><a href="/user/'.$user->uid.'/osi_list">Indicators</a></li>';
-          $content .= '<li><a href="/user/'.$user->uid.'/usernotes">My Notes and Files</a></li>';
-          $content .= '<li><a href="/user/'.$user->uid.'/osi_report">Results</a></li>';
-          $content .= '<li><a href="/user/'.$user->uid.'/osi_compare">Compare Assessments</a></li>';
-          $content .= '<li><a href="/user/'.$user->uid.'/edit">My Profile</a></li>';
+          $content .= '<li><a href="/user/'.$account->uid.'/osi_list">Indicators</a></li>';
+          $content .= '<li><a href="/user/'.$account->uid.'/usernotes">My Notes and Files</a></li>';
+          $content .= '<li><a href="/user/'.$account->uid.'/osi_report">Results</a></li>';
+          $content .= '<li><a href="/user/'.$account->uid.'/osi_compare">Compare Assessments</a></li>';
+          $content .= '<li><a href="/user/'.$account->uid.'/edit">My Profile</a></li>';
           $content .= '</ul>';
           $block = array('title' => $block_title, 'content' => $content, 'weight' => '-101');
           return($block);
@@ -465,8 +494,8 @@ function osi_block($op = 'list', $delta = 0) {
         case 'take-start':
           $rids = array_filter(osi_rid()); 
           if (empty($rids)) {
-            if (empty($user->osi_rids)) {
-              $content = drupal_get_form('osi_take_start_form', $user);
+            if (empty($account->osi_rids)) {
+              $content = drupal_get_form('osi_take_start_form', $account);
               $block = array('title' => 'Start Your Survey', 'content' => $content, 'weight' => '-101');
               return $block;
             }
@@ -480,14 +509,14 @@ function osi_block($op = 'list', $delta = 0) {
             $takes = array(); // get detailed list of takes that are not confirmed complete.
             foreach($categories as $tid) {
               $complete = $complete && osi_complete($tid);
-	      $result = db_query('SELECT * FROM {osi_take} WHERE uid = %d AND tid = %d AND status = 0 ORDER BY rid DESC',$user->uid, $tid);
+	      $result = db_query('SELECT * FROM {osi_take} WHERE uid = %d AND tid = %d AND status = 0 ORDER BY rid DESC',$account->uid, $tid);
 	      if ($take = db_fetch_object($result)) {
 	        $takes[] = $take;
 	      }
             }
 	    if ($complete) {
               if (count($takes)) {
-                $content = drupal_get_form('osi_take_complete_form', $user);
+                $content = drupal_get_form('osi_take_complete_form', $account);
               // $content .= '<pre>'.print_r($progress, TRUE).'</pre>';
                 $block = array('title' => 'Complete your Survey', 'content' => $content, 'weight' => '-101');
               //  print_r($block); die();
@@ -514,26 +543,12 @@ function osi_block($op = 'list', $delta = 0) {
       $title = $content = '';
       $weight='-10';
       if ($delta == 'category-status') { // a single category status block, calculate the current category
-        //while(list($i,$v) = each($user->roles)) { if($v == 'participant') $p = true; }
-        // if(!$p) return;
-        if ('node' == arg(0) && is_numeric(arg(1)) && !arg(2)) {
-          $node = node_build_content(node_load(arg(1)),FALSE,TRUE);
-          if (isset($node->osi_navigation)) {
-            $ctid = $node->osi_navigation['category_tid'];
-          }
+        if (!$ctid = osi_get_current_category()) {
+          return;
         }
-        elseif (arg(0) == 'user' && in_array(arg(2),array('osi_list','osi_report'))) {
-          if (arg(4) && is_numeric(arg(4))) {
-            $ctid = arg(4);
-          }
-        }
-        if (!$ctid)  return;
-        // die("ctid: $ctid");
-  // $args = explode('/',$_SERVER['REQUEST_URI']);
-  // if($args[1] == 'category' && $ctid != $args[2]) return;
         $icons = _osi_categories($lang,$ctid);
 
-        if ($user->uid) {
+        if ($account->uid) {
           $rids = osi_rid($ctid,$user->uid); // , $ctid);
           $rid = $rids[$ctid]->rid;
           $title = t('Assessment Progress');
@@ -542,9 +557,12 @@ function osi_block($op = 'list', $delta = 0) {
           $content = _osi_category_status($rid,$ctid,$base_path.'/images/'.$icons[$ctid]);
           $js = ($rid > 0) ? TRUE : FALSE;
           list($results,$total) = osi_progress($rid,$ctid,FALSE);
-          drupal_add_js(array('osi' => array('complete' => ($results== $total))),'setting');
+          drupal_add_js(array('osi' => array('complete' => ($results== $total), 'uid' => $user->uid)),'setting');
           drupal_add_js($path .'/category.js'); 
-        }            
+        }
+        else {
+          $content = 'error';
+        }
       }
       elseif ($delta == 'category-blocks') { // display the completion status of all categories
         $icons = _osi_categories($lang);
@@ -554,10 +572,10 @@ function osi_block($op = 'list', $delta = 0) {
             $rids = osi_rid($ctid,$user->uid); 
             $rid = $rids[$ctid]->rid;
             $js = $js || (($rid > 0) ? TRUE : FALSE);
-    }
-    if ($rid) {
-      $content .= '<div class="osi-category-block">'._osi_category_status($rid,$ctid).'</div>';
-    }
+          }
+          if ($rid) {
+            $content .= '<div class="osi-category-block">'._osi_category_status($rid,$ctid).'</div>';
+          }
         }
       } 
       elseif ($delta == 'category-resources') { // display the resources for the selected cateogies
@@ -570,7 +588,10 @@ function osi_block($op = 'list', $delta = 0) {
         $weight = 0;
       }  
 
-      if (!$content) return;
+      if (!$content) {
+        // die('test');
+        return;
+      }
       $block = array('subject' => $title, 'content' => $content, 'weight' => $weight);
       if ($js) {
         drupal_add_js('jQuery.extend(Drupal.settings, { "osiModulePath": "'.$base_path.'" });','inline');
@@ -2768,7 +2789,6 @@ function osi_nodeapi(&$node, $op, $a3, $a4) {
   $ctype = variable_get('osi_category_type',NULL);
   if ($op == 'view' && in_array($node->type,array($stype,$ctype)) && $a4) { // a4 means 'page' when op == 'view'
     $category_tid = osi_node_category_tid($node); 
-    // print_r($node); print_r($category_tid); die('test');
     // save the nid value of the last standard viewed
     $rids = osi_rid($category_tid); 
     $rid = $rids[$category_tid]->rid;
@@ -2848,7 +2868,7 @@ function osi_nodeapi(&$node, $op, $a3, $a4) {
         break;
     } // end switch
     if ($section_tid) {
-      $category_tid = current(array_keys(taxonomy_get_parents($section_tid)));
+      // $category_tid = current(array_keys(taxonomy_get_parents($section_tid)));
       $category_nodes = nat_get_nids(array($category_tid));
       $category_nid = current(array_keys($category_nodes));
       $breadcrumb = drupal_get_breadcrumb();
