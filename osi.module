@@ -3350,7 +3350,7 @@ function osi_survey(&$form_state) {
   $form = array();
   $form['rid'] = array('#type' => 'hidden', '#value' => $survey->rid);
   $form['uid'] = array('#type' => 'hidden', '#value' => $uid);
-  $form['survey'] = array('#type' => 'markup', '#value' => '<pre>'.print_r($survey, TRUE).'</pre>');
+//  $form['survey'] = array('#type' => 'markup', '#value' => '<pre>'.print_r($survey, TRUE).'</pre>');
   $form['start'] = array('#type' => 'submit', '#value' => 'Start', '#weight' => 100);
   $form['finish'] = array('#type' => 'submit', '#value' => 'Done', '#weight' => 100);
   $message = $note = '';
