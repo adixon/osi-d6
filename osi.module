@@ -1,7 +1,7 @@
 <?php 
 // BETA
 // $Id$
-
+opcache_reset();
 include_once('osi.features.inc');
 
 /**
@@ -471,7 +471,7 @@ function osi_block($op = 'list', $delta = 0) {
       $blocks['category-resources'] = array('info' => 'Category Resources');
       $blocks['category-report'] = array('info' => 'Category Report');
       $blocks['standard-comments'] = array('info' => 'Standard Comments');
-      $blocks['complete'] = array('info' => 'Assessment Complete');
+      $blocks['complete'] = array('info' => 'Survey Start or End');
       $blocks[23] = array('info' => 'Assessment menu');
 
       return $blocks;
@@ -504,12 +504,9 @@ function osi_block($op = 'list', $delta = 0) {
           }
           return;
         case 'complete':
-          $complete = osi_user_is_complete();
-          if ($complete) {
-            $block = array('title' => 'Complete!', 'content' => '<div class="messages status">Congratulations, your assessment is complete. Visit your <a href="/user">My Account</a> page and review the "Module reports"</div>', 'weight' => '-101');
-            return($block);
-          }
-          return;
+          $survey_form = drupal_get_form('osi_survey');
+          $block = array('title' => 'Your Survey', 'content' => $survey_form, 'weight' => '-101');
+          return($block);
       }
 
       $path = drupal_get_path('module', 'osi');
@@ -582,14 +579,14 @@ function osi_block($op = 'list', $delta = 0) {
         }
       } 
       elseif ($delta == 'category-resources') { // display the resources for the selected cateogies
-	$args = explode('/',$_SERVER['REQUEST_URI']);
-	if($args[1] == 'category') $catid = $args[2];
+        $args = explode('/',$_SERVER['REQUEST_URI']);
+        if($args[1] == 'category') $catid = $args[2];
         $title = t('Assessment Resources');
-	$content .= views_embed_view('Resources','block_4',$args[2]); 
-	$content .= '<p> ~ <a href="/resources?keys=&term_node_tid_depth='.$args[2].'">more resources</a></p>';
-	$content .= '<p> ~ <a href="/node/add/resource">submit a resource</a></p>';
+        $content .= views_embed_view('Resources','block_4',$args[2]); 
+        $content .= '<p> ~ <a href="/resources?keys=&term_node_tid_depth='.$args[2].'">more resources</a></p>';
+        $content .= '<p> ~ <a href="/node/add/resource">submit a resource</a></p>';
         $weight = 0;
-      }	
+      }
 
       if (!$content) return;
       $block = array('subject' => $title, 'content' => $content, 'weight' => $weight);
@@ -1070,7 +1067,6 @@ function osi_render_answers_form(&$form_state, $node, $previous) {
   static $indct;
   $indct++;
   // if($indct == '1') $indct = 'a';
-
   $form = array('#attributes' => array('class' => 'osi-answers-form'));
   $nid = $node->nid;
   $tnid = $node->tnid ? $node->tnid : $nid;
@@ -1101,6 +1097,7 @@ function osi_render_answers_form(&$form_state, $node, $previous) {
     '#options' => $options, 
     '#default_value' => $previous->result, 
     '#required' => TRUE, 
+    '#disabled' => osi_user_is_finished(),
   );
   $form['help'] = array(
     '#type' => 'markup', 
@@ -3103,7 +3100,7 @@ function osi_complete($tid) {
 }
 
 /*
- * Test where the current user has completed a rid
+ * Test whether the current user has completed all categories of the survey
  */
 function osi_user_is_complete() {
   global $user;
@@ -3114,6 +3111,16 @@ function osi_user_is_complete() {
     if ($results < $total) return FALSE;
   }
   return TRUE;
+}
+
+function osi_user_is_finished() {
+  static $is_finished;
+  if (!isset($is_finished)) {
+    global $user;
+    $result = db_result(db_query('SELECT status FROM {osi_take} WHERE uid = %d AND tid = 0 ORDER BY rid DESC LIMIT 1', $user->uid));
+    $is_finished = !empty($result) ? TRUE : FALSE;
+  }
+  return $is_finished;
 }
 
 /* user form for administering assessments: compare past ones, or create a new one */
@@ -3326,4 +3333,70 @@ function _osi_rid_list($rid_list, $uid) {
 
 function osi_menu_alter(&$items) {
   $items['user/%user_category/edit']['title'] = 'Edit Your Account';
+}
+
+/* Survey start and complete form */
+
+function osi_survey(&$form_state) {
+  global $user;
+  $uid = $user->uid;
+  $rids = osi_rid(NULL, $uid);
+  $survey = db_fetch_object(db_query('SELECT * FROM {osi_take} WHERE uid = %d AND tid = 0 ORDER BY rid DESC', $uid));
+  if (empty($survey->rid)) {
+    $survey->uid = $uid;
+    $survey->tid = -1;
+    $survey->rid = 0;
+  }
+  $form = array();
+  $form['rid'] = array('#type' => 'hidden', '#value' => $survey->rid);
+  $form['uid'] = array('#type' => 'hidden', '#value' => $uid);
+  $form['survey'] = array('#type' => 'markup', '#value' => '<pre>'.print_r($survey, TRUE).'</pre>');
+  $form['start'] = array('#type' => 'submit', '#value' => 'Start', '#weight' => 100);
+  $form['finish'] = array('#type' => 'submit', '#value' => 'Done', '#weight' => 100);
+  $message = $note = '';
+  if ($survey->created > 0) {
+    unset($form['start']);
+    if (!osi_user_is_complete()) {
+      // todo - put status information here instead?
+      // return;
+      unset($form['finish']);
+      $note = '<div class="messages status">In progress</div>';
+    }
+    else {
+      if(empty($survey->status)) {
+        $note = '<div class="messages status">Congratulations, you have completed all the questions for the assessment. Click "Finish" below to complete the assessment and lock your answers.</div>';
+      }
+      else {
+        unset($form['finish']);
+        $note = '<div class="messages status">Thank you for completing the assessment. You can now visit your <a href="/user">My Account</a> page and review the "Module reports"</div>';
+      }
+    }
+  }
+  else {
+    $note = '<div class="messages status">Welcome. Please click "Start" below to start your assessment.</div>';
+    unset($form['finish']);
+  }
+  if ($message) {
+    drupal_set_message($message);
+  }
+  if ($note) {
+    $form['note'] = array('#type' => 'markup', '#value' => $note);
+  }
+  return $form;
+}
+
+function osi_survey_submit($form, &$form_state) {
+  $values = $form_state['values'];
+// print_r($values); die();
+  if ($values['start'] && empty($values['rid'])) {
+   // get started!
+   $take = new StdClass();
+   $take->uid = $values['uid'];
+   $take->tid = 0;
+   $take->created = time();
+   drupal_write_record('osi_take',$take);
+  }
+  elseif ($values['finish'] && !empty($values['rid'])) {
+    db_query("UPDATE {osi_take} SET status = 1, changed = %d WHERE rid = %d", time(), $values['rid']);
+  }
 }
