@@ -471,6 +471,7 @@ function osi_block($op = 'list', $delta = 0) {
       $blocks['category-resources'] = array('info' => 'Category Resources');
       $blocks['category-report'] = array('info' => 'Category Report');
       $blocks['standard-comments'] = array('info' => 'Standard Comments');
+      $blocks['complete'] = array('info' => 'Assessment Complete');
       $blocks[23] = array('info' => 'Assessment menu');
 
       return $blocks;
@@ -499,6 +500,13 @@ function osi_block($op = 'list', $delta = 0) {
             $block_title = '';
             $content = comment_bonus_api_comment_render($node, $node->cid);
             $block = array('title' => $block_title, 'content' => $content, 'weight' => '-101');
+            return($block);
+          }
+          return;
+        case 'complete':
+          $complete = osi_user_is_complete();
+          if ($complete) {
+            $block = array('title' => 'Complete!', 'content' => '<div class="messages status">Congratulations, your assessment is complete. Visit your <a href="/user">My Account</a> page and review the "Module reports"</div>', 'weight' => '-101');
             return($block);
           }
           return;
@@ -555,7 +563,7 @@ function osi_block($op = 'list', $delta = 0) {
                     'html' => $format['html']
                   );
                 }
-                $content .= theme('links',$links);
+                $content = theme('links',$links).$content;
               }
             }
           }
@@ -566,7 +574,8 @@ function osi_block($op = 'list', $delta = 0) {
         foreach($icons as $ctid => $icon) {
           $rid = 0;
           if ($account->uid) { 
-            $rid = reset(osi_rid($ctid,$account->uid)); 
+            $rids = osi_rid($ctid,$account->uid); 
+            $rid = reset($rids);
             $js = $js || (($rid > 0) ? TRUE : FALSE);
           }
           $content .= '<div class="osi-category-block">'._osi_category_status($rid,$ctid).'</div>';
@@ -1176,7 +1185,7 @@ function osi_ajax_status_standard($node) {
   if ($tid) {
     $score = osi_standard_score($tid, $rid); // load the current user's score data
 // var_dump($score);
-    $status_string = '<div class="last-change">Last change: !last_change</div><div class="progress">!progress Indicators responded</div><div class="status!completion"></div>';
+    $status_string = '<div class="last-change">Last change: !last_change</div><div class="progress">!progress questions answered</div><div class="status!completion"></div>';
     $progress = t('%count/%tcount', array('%count' => $score->answer_count, '%tcount' => $score->node_count));
     if ($score->last_change) {
       $last_change = format_date($score->last_change);
@@ -1559,19 +1568,25 @@ function osi_list($account = NULL, $filter_string = '') {
     $cat = taxonomy_get_term($cat_tid);
     $incst = 1;
     $incat = 1;
-    $output .= '<dt><a class="osi-collapsible osi-category">'.$cat->name.'</a></dt><dd><dl class="osi-uncollapsed">';
-    foreach($standards as $standard_tid => $indicators) {
-      // print_r($standards); die();
-      $standard = taxonomy_get_term($standard_tid);
-      $output .= '<dt><a class="osi-collapsible osi-standard">'.($incst++).'. '.$standard->name.'</a></dt><dd class="osi-standard">';
-      $rows = array();
-      $indct = 'a';
-      foreach($indicators as $nid => $indicator) { 
-        $rows[] = array('class' => 'osi-indicator-row','data' => theme('osi_indicator_row',$indct,$indicator,$filter));
-        $indct++;
+    $output .= '<dt><a class="osi-collapsible osi-category">'.$cat->name.'</a></dt>';
+    $output .= '<dd><dl class="osi-uncollapsed">';
+    if (count($standards) > 0) {
+      foreach($standards as $standard_tid => $indicators) {
+        // print_r($standards); die();
+        $standard = taxonomy_get_term($standard_tid);
+        $output .= '<dt><a class="osi-collapsible osi-standard">'.($incst++).'. '.$standard->name.'</a></dt><dd class="osi-standard">';
+        $rows = array();
+        $indct = 'a';
+        foreach($indicators as $nid => $indicator) { 
+          $rows[] = array('class' => 'osi-indicator-row','data' => theme('osi_indicator_row',$indct,$indicator,$filter));
+          $indct++;
+        }
+        $output .= theme('osi_table', $header, $rows, 'osi-indicators-report-'.$filter);
+        $output .= '</dd>';
       }
-      $output .= theme('osi_table', $header, $rows, 'osi-indicators-report-'.$filter);
-      $output .= '</dd>';
+    }
+    else {
+      $output .= '<dt><em>None</em></dt>';
     }
     $output .= '</dl></dd>';
   }
@@ -1873,10 +1888,11 @@ function _osi_category_report($uid, $ctid, $rid) {
   $results = db_query("SELECT nid,result FROM {osi_rid} WHERE rid = %d AND result in (4)", $rid);
   $nodes = array();
   while ($result = db_fetch_array($results)) {
-    $nodes[] = node_load($result['nid']);
+    $node = node_load($result['nid']);
+    $nodes[] = $node;
   }
   $content .= '<h4>'.t('Areas of Innovation').'</h4>'.theme('osi_innovations',$nodes);
-  $content .= '<h4>'.t('Your Comments').'</h4>'.views_embed_view('osi_comments','default',$uid,$ctid);
+  // $content .= '<h4>'.t('Your Comments').'</h4>'.views_embed_view('osi_comments','default',$uid,$ctid);
   return $content;
 }
 
@@ -1902,6 +1918,7 @@ function osi_category_report($account = NULL, $filter_tid = 0, $rid_list = '', $
   if ($page) {
     drupal_set_title($filter_tid ? t('Category Report') : t('Category Reports'));
   }
+  $output = ''; //<dl class="osi-user osi-uncollapsed">';
   if ($filter_tid) { 
     // if it's subcategory, get the category
     $category_tid = $filter_tid;
@@ -1918,10 +1935,10 @@ function osi_category_report($account = NULL, $filter_tid = 0, $rid_list = '', $
     }
   }
   else { // no rid_lists allowed, just get the most recent assessment for each category
+    $output = '<p><strong>Note:</strong> You can also return to your "My Account" page and select an individual module to see its report</p>';
     $rid_list = '';
     $rids = array_flip(osi_rid(NULL,$uid));
   }
-  $output = ''; //<dl class="osi-user osi-uncollapsed">';
   foreach($rids as $rid => $category_tid) {
     $cat = taxonomy_get_term($category_tid);
     $output .= '<h2>'. theme('osi_category_name',$cat) .'</h2>';
@@ -2383,6 +2400,7 @@ function theme_osi_improvements($nodes) {
   if (empty($nodes)) {
     return 'Congratulations, there are no areas of improvement or continued work based on your responses.';
   }
+  $uid = $GLOBALS['user']->uid;
   $answers = _osi_get_answers(TRUE);
   $output = '<dl>';
   $standard_tid = 0;
@@ -2393,6 +2411,10 @@ function theme_osi_improvements($nodes) {
       $nids = nat_get_nids(array($tid)); 
       $standard = node_load(key($nids));
       $output .= '<dt>'.theme('osi_standard_title',$standard).'</dt>';
+      $comments = views_embed_view('osi_comments_standard','default',$uid,$standard->nid);
+      if (!strpos($comments,'view-empty')) {
+        $output .= '<dd class="comments"><em><strong>Your comments:</strong></em>'.$comments.'</dd>';
+      }
     }
     $title = theme('osi_indicator_title', $node);
     $output .= '<dd>'.l($title,'node/'.$node->nid, array('html' => 1)).' [<strong>'.$answers[$node->result].'</strong>]</dd>';
@@ -2405,6 +2427,7 @@ function theme_osi_innovations($nodes) {
   if (empty($nodes)) {
     return 'Based on your responses, you have no areas of innovation.';
   }
+  $uid = $GLOBALS['user']->uid;
   $output = '<dl>';
   $standard_tid = 0;
   foreach($nodes as $node) {
@@ -2414,6 +2437,10 @@ function theme_osi_innovations($nodes) {
       $nids = nat_get_nids(array($tid)); 
       $standard = node_load(key($nids));
       $output .= '<dt>'.theme('osi_standard_title',$standard).'</dt>';
+      $comments = views_embed_view('osi_comments_standard','default',$uid,$standard->nid);
+      if (!strpos($comments,'view-empty')) {
+        $output .= '<dd class="comments"><em><strong>Your comments:</strong></em>'.$comments.'</dd>';
+      }
     }
     $title = theme('osi_indicator_title', $node);
     $output .= '<dd>'.l($title,'node/'.$node->nid, array('html' => 1)).'</dd>';
@@ -3073,6 +3100,20 @@ function osi_complete($tid) {
   list($results,$total) = osi_progress($rid,$tid,FALSE);
   
   return $complete[$tid] = ($results == $total) ? 1 : 0;
+}
+
+/*
+ * Test where the current user has completed a rid
+ */
+function osi_user_is_complete() {
+  global $user;
+  $categories = array_keys(_osi_categories($user->language));
+  foreach($categories as $ctid) {
+    $rid = current(osi_rid($ctid, $user->uid));
+    list($results,$total) = osi_progress($rid,$ctid,FALSE);
+    if ($results < $total) return FALSE;
+  }
+  return TRUE;
 }
 
 /* user form for administering assessments: compare past ones, or create a new one */
