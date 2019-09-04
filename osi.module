@@ -322,6 +322,12 @@ function osi_menu() {
     'page arguments' => array(1,2, TRUE),
     'type' => MENU_LOCAL_TASK,
   );
+  $items['admin/reports/osi_report_user_details'] = array(
+    'title' => 'Detailed User Progress Report', 
+    'page callback' => 'osi_report_user_details', 
+    'access arguments' => array('view osi user report'), 
+    'type' => MENU_NORMAL_ITEM,
+  );
   $items['user/%user/view'] = '';
   return $items;
 }
@@ -2268,6 +2274,88 @@ function osi_report_users($variable = 'name') {
 
     return theme('osi_table',$header,$rows,'osi-report-users');
   }
+
+/**
+ * function osi_report_user_details()
+ *
+ * Retrieve a table report of results by user 
+ * Showing username, and status and details of progress on most recent assessment.
+ *
+ */
+
+function osi_report_user_details() {
+  global $user;
+  drupal_set_title('User Progress Report');
+  // $path = drupal_get_path('module', 'osi');
+  // $header = array(l('Name','osi_users/name'),l('Email','osi_users/email'),l('Last Login','osi_users/lastlogin'),l('# Assessments','osi_users/assessments'),l('% Complete','osi_users/complete'),t('Roles'));
+  $header = array(l('Name','osi_users/name'),l('Last Login','osi_users/lastlogin'), 'Started', 'Finished');
+  $categories = _osi_categories();
+  foreach($categories as $tid => $name) {
+    $header[] = l($name,'osi_users/tidstatus'.$tid);
+    //$header[] = '';//l('Started','osi_users/tidstart'.$tid);
+    // $header[] = '';//l('Last Change','osi_users/tidend'.$tid);
+  }
+  // get an array of uid -> most recent takes, all tids
+  $state = array();
+  $result = db_query("SELECT * FROM {osi_take} ORDER BY rid DESC");
+  while ($take = db_fetch_object($result)) {
+    $uid = $take->uid;
+    $tid = $take->tid;
+    if (!isset($state[$uid])) {
+      $state[$uid] = array();
+    }
+    if (empty($state[$uid][$tid])) {
+      $state[$uid][$tid] = $take;
+    }
+  } 
+  $rows = array();
+  foreach ($state as $uid => $takes) {
+    $account = user_load($uid);
+    $row = array(l($account->name,'user/'.$account->uid), format_date($account->login, 'custom', 'Y-M-d'));
+	    //,l($account->mail,'user/'.$account->uid.'/contact'), $account->login);
+    $take = $takes[0];
+    $row[] = $take->changed ? format_date($take->created, 'custom', 'Y-M-d') : '';
+    $row[] = $take->changed ? format_date($take->changed, 'custom', 'Y-M-d') : '';
+    foreach($categories as $tid => $name) {
+      if (!empty($takes[$tid])) {
+        $take = $takes[$tid];
+	list($results,$total) = osi_progress($take->rid,$take->tid,0);
+        $output = "[$results / $total]";
+        //$row[] = format_date($take->created);
+        $row[] = $output . ' ' .($take->changed ? format_date($take->changed, 'custom', 'Y-M-d') : '');
+      }
+      else {
+        $row[] = '-';
+        //$row[] = ' ';
+        //$row[] = ' ';
+      }
+    }
+    $rows[] = $row;
+  }
+  /*
+  // Obtain a list of columns
+  foreach ($rows as $key => $row) {
+    if($variable == 'name') $name[$key] = $row['0'];
+    if($variable == 'email') $name[$key]  = $row['1'];
+    if($variable == 'lastlogin') $name[$key]  = $row['2'];
+    if($variable == 'complete') $name[$key]  = $row['4'];
+  }
+
+  // Sort the data with volume descending, edition ascending
+  // Add $data as the last parameter, to sort by the common key
+  if($variable == 'name') array_multisort($name, SORT_ASC, $rows);
+  if($variable == 'email') array_multisort($name, SORT_ASC, $rows);
+  if($variable == 'complete') array_multisort($name, SORT_NUMERIC, SORT_DESC, $rows);
+  if($variable == 'lastlogin') array_multisort($name, SORT_NUMERIC, SORT_DESC, $rows);
+
+  // Convert date from unix timestamp
+  foreach ($rows as $key => $row) {
+    $row['2'] = format_date($row['2'],'custom','Y-M-d');
+    $rows[$key] = $row;
+  } */
+
+  return theme('osi_table',$header,$rows,'osi-report-user-details');
+}
 
 
 
