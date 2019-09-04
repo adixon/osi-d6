@@ -2202,7 +2202,7 @@ function osi_report_aggregate($style = 0, $filter_tid = 0, $details = FALSE, $pe
     $output .= '</dl></dd>';
   }
   $output .= '</dl>';
-  return $output;
+  return _osi_print_links() . $output;
 }
 
 function osi_percent($rdata,$rtotal) {
@@ -2284,14 +2284,15 @@ function osi_report_users($variable = 'name') {
  */
 
 function osi_report_user_details() {
-  global $user;
+  // global $user;
   drupal_set_title('User Progress Report');
   // $path = drupal_get_path('module', 'osi');
   // $header = array(l('Name','osi_users/name'),l('Email','osi_users/email'),l('Last Login','osi_users/lastlogin'),l('# Assessments','osi_users/assessments'),l('% Complete','osi_users/complete'),t('Roles'));
-  $header = array(l('Name','osi_users/name'),l('Last Login','osi_users/lastlogin'), 'Started', 'Finished');
+  // $header = array(l('Name','osi_users/name'),l('Last Login','osi_users/lastlogin'), 'Started', 'Finished');
+  $header = array('Uid', 'Name', 'Last Login', 'Started', 'Finished');
   $categories = _osi_categories();
   foreach($categories as $tid => $name) {
-    $header[] = l($name,'osi_users/tidstatus'.$tid);
+    $header[] = array('data' => $name, 'colspan' => 2);
     //$header[] = '';//l('Started','osi_users/tidstart'.$tid);
     // $header[] = '';//l('Last Change','osi_users/tidend'.$tid);
   }
@@ -2307,56 +2308,60 @@ function osi_report_user_details() {
     if (empty($state[$uid][$tid])) {
       $state[$uid][$tid] = $take;
     }
-  } 
+  }
+  ksort($state); 
   $rows = array();
+  $profile_access = user_access('access user profiles');
   foreach ($state as $uid => $takes) {
     $account = user_load($uid);
-    $row = array(l($account->name,'user/'.$account->uid), format_date($account->login, 'custom', 'Y-M-d'));
-	    //,l($account->mail,'user/'.$account->uid.'/contact'), $account->login);
+    $row = array($account->uid,($profile_access ? l($account->name,'user/'.$account->uid): $account->name), format_date($account->login, 'custom', 'Y-M-d'));
     $take = $takes[0];
     $row[] = $take->changed ? format_date($take->created, 'custom', 'Y-M-d') : '';
     $row[] = $take->changed ? format_date($take->changed, 'custom', 'Y-M-d') : '';
     foreach($categories as $tid => $name) {
       if (!empty($takes[$tid])) {
         $take = $takes[$tid];
-	list($results,$total) = osi_progress($take->rid,$take->tid,0);
-        $output = "[$results / $total]";
+        list($results,$total) = osi_progress($take->rid,$take->tid,0);
+        $row[] = "[$results / $total]";
         //$row[] = format_date($take->created);
-        $row[] = $output . ' ' .($take->changed ? format_date($take->changed, 'custom', 'Y-M-d') : '');
+        $row[] = ($take->changed ? format_date($take->changed, 'custom', 'Y-M-d') : '');
       }
       else {
         $row[] = '-';
-        //$row[] = ' ';
+        $row[] = ' ';
         //$row[] = ' ';
       }
     }
     $rows[] = $row;
   }
-  /*
-  // Obtain a list of columns
-  foreach ($rows as $key => $row) {
-    if($variable == 'name') $name[$key] = $row['0'];
-    if($variable == 'email') $name[$key]  = $row['1'];
-    if($variable == 'lastlogin') $name[$key]  = $row['2'];
-    if($variable == 'complete') $name[$key]  = $row['4'];
-  }
-
-  // Sort the data with volume descending, edition ascending
-  // Add $data as the last parameter, to sort by the common key
-  if($variable == 'name') array_multisort($name, SORT_ASC, $rows);
-  if($variable == 'email') array_multisort($name, SORT_ASC, $rows);
-  if($variable == 'complete') array_multisort($name, SORT_NUMERIC, SORT_DESC, $rows);
-  if($variable == 'lastlogin') array_multisort($name, SORT_NUMERIC, SORT_DESC, $rows);
-
-  // Convert date from unix timestamp
-  foreach ($rows as $key => $row) {
-    $row['2'] = format_date($row['2'],'custom','Y-M-d');
-    $rows[$key] = $row;
-  } */
-
-  return theme('osi_table',$header,$rows,'osi-report-user-details');
+  $content = theme('osi_table',$header,$rows,'osi-report-user-details');
+  return _osi_print_links() . $content;
 }
 
+function _osi_print_links($path = '') {
+  $path = $path ? $path : $_GET['q'];
+  if (module_exists('print')) {
+    drupal_add_css(drupal_get_path('module', 'print') .'/css/printlinks.css');
+    $format = theme('print_format_link');
+    $links = array();
+    $links['print'] = array(
+      'href' => PRINT_PATH . '/' . $path,
+      'title' => $format['text'], //'Print a pdf of this report',
+      'attributes' => $format['attributes'],
+      'html' => $format['html']
+    );
+    if (module_exists('print_pdf')) {
+      $format = theme('print_pdf_format_link');
+      $links['print_pdf'] = array(
+        'href' => PRINTPDF_PATH . '/' . $path,
+        'title' => $format['text'], //'Print a pdf of this report',
+        'attributes' => $format['attributes'],
+        'html' => $format['html']
+      );
+    }
+    return theme('links',$links);
+  }
+}
 
 
 function theme_osi_answer_help($help) {
