@@ -2125,8 +2125,8 @@ function osi_report_aggregate($style = 0, $filter_tid = 0, $details = FALSE, $pe
         }
         $standard = current(nat_get_nids(array($tid),TRUE));
         $data = theme($theme_hook,$score,$standard, $style,$percent);
-        if ($details) {
-          foreach($data as $row) {
+        if ($details) { 
+	  foreach($data as $row) {
             $rows[] = $row; 
           }
         }
@@ -2460,14 +2460,14 @@ function theme_osi_aggregate_score_row_details($score, $standard, $style, $total
     ksort($answers);
   }
   if (is_null($score)) { // header row
-    return array(-20 => 'Benchmark/Indicator') + $answers;
+    return array(-20 => 'Benchmark/Indicator') + $answers + array(1000 => 'Total');
   }
   if ($total) {
     
   }
   $name = is_object($standard) ? ($standard->field_id[0]['value'] . '. '. $standard->title) : $standard;
   $rows = array(); // 
-  $rows[] = array('class' => 'standard','data' => array(array('data' => $name, 'colspan' => (1+count($answers))))); // a row with just the indicator title in it
+  $rows[] = array('class' => 'standard','data' => array(array('data' => $name, 'colspan' => (2+count($answers))))); // a row with just the indicator title in it
   foreach($score as $nid => $answer_counts) { // additional rows for each indicator
     $row = array();
     $indicator = node_load($nid);
@@ -2478,9 +2478,13 @@ function theme_osi_aggregate_score_row_details($score, $standard, $style, $total
     $letter = $letters[-1 + (int) $indicator->field_number[0]['value']];
     $title = $letter . '. '.$title;
     $row['title'] = array('data' => l($title,'node/'.$indicator->nid),'class' => 'title');
+    $total = 0;
     foreach(array_keys($answers) as $key) {
-      $row[] = array('data' => (integer) $answer_counts[$key], 'class' => 'result');
+      $count = (integer) $answer_counts[$key];
+      $total += $count;
+      $row[] = array('data' => $count, 'class' => 'result');
     }
+    $row[] = array('data' => $total, 'class' => 'result');
     $rows[] = $row;
   }
   return $rows;
