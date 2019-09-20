@@ -116,6 +116,12 @@ function osi_menu() {
 
   $items = array();
 
+  $items['osi_denied'] = array(
+    'title' => 'Wait!',
+    'page callback' => 'osi_denied',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK, 
+  );
   $items['osi/term/%'] = array(
     'title' => 'NAT Term redirect',
     'page callback' => 'osi_nat_term_redirect',
@@ -523,7 +529,7 @@ function osi_block($op = 'list', $delta = 0) {
 		return $block;
 	      }
 	      else {
-		$content = '<p>Thank you for completing the survey</p>';
+		$content = '<p>Thank you for completing the survey!</p><p><a href="/user/'.$user->uid.'/osi_report">View your report</a>';
                 $block = array('title' => 'Complete', 'content' => $content, 'weight' => '-101');
                 return $block;
 	      }
@@ -1176,13 +1182,12 @@ function osi_take_start_form(&$form_state) {
   // Create form.
   $form['info'] = array(
     '#type' => 'markup',
-    '#value' => '<p>Ready to start? Fill in the dates of the period you are evaluating and click "Start".</p>
-    <p>When you have answered all the questions, return here and confirm that you are done.</p>',
+    '#value' => '<p>Ready to start?</p><p>Enter the start and end dates of the period you are assessing, and then click "Start".</p>',
   );
   $form['description'] = array(
     '#type' => 'textfield', 
     '#title' => 'Evaluation Period', 
-    '#description' => 'Enter the start and end dates of the period you are evaluating.', 
+    '#description' => 'e.g. September 2018 to August 2019.', 
     '#required' => TRUE, 
   );
   $form['submit'] = array(
@@ -1218,7 +1223,7 @@ function osi_take_complete_form(&$form_state, $user) {
   // Create form.
   $form['hello'] = array(
     '#type' => 'markup', 
-    '#value' => '<p>You have completed all the required questions.</p>
+    '#value' => '<p>You have completed all of the required questions.</p>
     <p>Click "Finish" below to complete the survey, or go back to modify your answers.</p>'
   );
   $form['submit'] = array(
@@ -3263,4 +3268,37 @@ function _osi_rid_list($rid_list, $uid) {
 
 function osi_menu_alter(&$items) {
   $items['user/%user_category/edit']['title'] = 'Edit Your Account';
+}
+
+function osi_denied() {
+  // global $user;
+  switch ($_SERVER['REQUEST_URI']) {
+    case '/user/register': 
+      return t('<p>You are already registered and logged in.</p><p>Please !link.</p>', array('!link' => l('get started, or continue the assessment','<front>')));
+    case '/user/login': 
+      return t('<p>You are already logged in.</p><p>Please !link.</p>', array('!link' => l('get started, or continue the assessment','<front>')));
+  }
+}
+
+function _osi_is_ed() {
+  global $user;
+  static $is_ed;
+  if (isset($is_ed)) {
+    return $is_ed;
+  }
+  if ($user->uid) {
+    $profile = new stdClass;
+    $profile->uid = $user->uid;
+    profile_load_profile($profile);
+    $is_ed = $profile->profile_ed ? 1 : 0;
+    return $is_ed;
+  }
+  elseif (isset($_GET['qtype'])) {
+    $anon_is_ed = ($_GET['qtype'] == 'executive_director') ? 1 : 0;
+    $_SESSION['anon_is_ed'] = $anon_is_ed;
+  }
+  elseif (isset($_SESSION['anon_is_ed'])) {
+    $anon_is_ed = $_SESSION['anon_is_ed'];
+  }
+  return $anon_is_ed;
 }
